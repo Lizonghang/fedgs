@@ -40,6 +40,10 @@ def parse_args():
                         help="learning rate for local optimizers;",
                         type=float,
                         default=0.01)
+    parser.add_argument("--num-groups",
+                        help="number of groups;",
+                        type=int,
+                        default=10)
     parser.add_argument("--seed",
                         help="seed for random client sampling and batch splitting;",
                         type=int,
