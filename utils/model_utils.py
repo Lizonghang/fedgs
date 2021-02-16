@@ -16,19 +16,20 @@ def batch_data(data, batch_size, seed):
     data_x = data['x']
     data_y = data['y']
 
-    # randomly shuffle data
-    mx.random.seed(seed)
-    mx.random.shuffle(data_x)
-    mx.random.seed(seed)
-    mx.random.shuffle(data_y)
+    while True:
+        # randomly shuffle data
+        mx.random.seed(seed)
+        mx.random.shuffle(data_x)
+        mx.random.seed(seed)
+        mx.random.shuffle(data_y)
 
-    # loop through mini-batches
-    for i in range(0, len(data_x), batch_size):
-        l = i
-        r = min(i + batch_size, len(data_y))
-        batched_x = data_x[l:r]
-        batched_y = data_y[l:r]
-        yield batched_x, batched_y
+        # loop through mini-batches
+        for i in range(0, len(data_x), batch_size):
+            l = i
+            r = min(i + batch_size, len(data_y))
+            batched_x = data_x[l:r]
+            batched_y = data_y[l:r]
+            yield batched_x, batched_y
 
 
 def read_dir(data_dir):

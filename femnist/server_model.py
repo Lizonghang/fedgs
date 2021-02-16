@@ -26,6 +26,10 @@ class ServerModel:
             self.model.initialize(
                 init.Zero(), ctx=self.ctx, force_reinit=True)
 
+    def reset_zero(self):
+        self.model.initialize(
+            init.Zero(), ctx=self.ctx, force_reinit=True)
+
     def set_params(self, model_params):
         source_params = list(model_params)
         target_params = list(self.get_params())
@@ -67,7 +71,7 @@ class ServerModel:
             tot_size += var_size
         return tot_size
 
-    def save_model(self, log_dir):
+    def save(self, log_dir):
         """Saves the server model to:
             {log_dir}/{self.model_name}.params
         """

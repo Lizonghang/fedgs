@@ -40,8 +40,8 @@ def print_metrics(round_number,
         metrics: Dict keyed by client id. Each element is a dict of metrics
             for that client in the specified round. The dicts for all clients
             are expected to have the same set of keys.
-        hierarchies: Dict keyed by client id. Each element is a list of hierarchies
-            to which the client belongs.
+        hierarchies: Dict keyed by client id. Each element is a group id to
+            which the client belongs.
         num_samples: Dict keyed by client id. Each element is the number of test
             samples for the client.
         partition: String. Value of the 'set' column.
@@ -57,7 +57,7 @@ def print_metrics(round_number,
         current_client = {
             'client_id': c_id,
             'round_number': round_number,
-            'hierarchy': ','.join(hierarchies.get(c_id, [])),
+            'hierarchy': hierarchies.get(c_id, -1),
             'num_samples': num_samples.get(c_id, np.nan),
             'set': partition,
         }

@@ -3,8 +3,7 @@ import numpy as np
 import mxnet as mx
 import warnings
 
-from mxnet import autograd
-from utils.model_utils import batch_data
+from mxnet import autograd, nd
 from baseline_constants import INPUT_SIZE
 
 
@@ -43,37 +42,30 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data, num_epochs=1, batch_size=10):
+    def train(self, data_iter):
         """
         Trains the client model.
         Args:
             data: Dict of the form {'x': NDArray, 'y': NDArray}.
-            num_epochs: Number of epochs to train.
             batch_size: Size of training batches.
         Return:
             comp: Number of FLOPs computed while training given data
-            update: List of np.ndarray weights, with each weight array
-                corresponding to a variable in the resulting graph
         """
-        for _ in range(num_epochs):
-            self.run_epochs(data, batch_size)
+        batched_x, batched_y = next(data_iter)
+        input_data = self.preprocess_x(batched_x)
+        target_data = self.preprocess_y(batched_y)
+        num_samples = len(batched_y)
+
+        with autograd.record():
+            y_hats = self.net(input_data)
+            ls = self.loss(y_hats, target_data)
+            ls.backward()
+        self.trainer.step(num_samples)
+        nd.waitall()
 
         update = self.get_params()
-        comp = num_epochs * len(data['y']) * self.flops \
-            if self.count_ops else 0
-        return comp, update
-
-    def run_epochs(self, data, batch_size):
-        for batched_x, batched_y in batch_data(data, batch_size, seed=self.seed):
-            input_data = self.preprocess_x(batched_x)
-            target_data = self.preprocess_y(batched_y)
-
-            with autograd.record():
-                y_hats = self.net(input_data)
-                ls = self.loss(y_hats, target_data)
-                ls.backward()
-
-            self.trainer.step(len(batched_y))
+        comp = num_samples * self.flops if self.count_ops else 0
+        return comp, num_samples, update
 
     def __num_elems(self, shape):
         '''Returns the number of elements in the given shape

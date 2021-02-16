@@ -7,7 +7,7 @@ import mxnet as mx
 import metrics.writer as metrics_writer
 
 from client import Client
-from server import TopServer, MidServer
+from server import TopServer, MiddleServer
 from baseline_constants import MODEL_PARAMS
 from utils.args import parse_args
 from utils.model_utils import read_data
@@ -17,7 +17,7 @@ def main():
     args = parse_args()
     num_rounds = args.num_rounds
     eval_every = args.eval_every
-    clients_per_round = args.clients_per_round
+    clients_per_group = args.clients_per_group
     ctx = mx.gpu(args.ctx) if args.ctx >= 0 else mx.cpu()
 
     log_dir = os.path.join(
@@ -25,8 +25,8 @@ def main():
     os.makedirs(log_dir, exist_ok=True)
     log_fn = "output.%i" % args.log_rank
     log_file = os.path.join(log_dir, log_fn)
-    # log_fp = open(log_file, "w+")
-    log_fp = None
+    log_fp = open(log_file, "w+")
+    # log_fp = None
 
     # Set the random seed, affects client sampling and batching
     random.seed(1 + args.seed)
@@ -61,9 +61,9 @@ def main():
         args.seed, args.dataset, args.model, ctx, args.count_ops, *model_params)
 
     # Create middle server model
-    mid_server_model = ServerModel(
+    middle_server_model = ServerModel(
         client_model, args.dataset, args.model, num_classes, ctx)
-    mid_merged_update = ServerModel(
+    middle_merged_update = ServerModel(
         None, args.dataset, args.model, num_classes, ctx)
 
     # Create top server model
@@ -74,19 +74,22 @@ def main():
 
     # Create clients
     clients, groups = setup_clients(
-        args.dataset, client_model, args.use_val_set, args.num_groups)
+        args.dataset, client_model, args)
     _ = get_clients_info(clients)
     client_ids, client_groups, client_num_samples = _
     print("Total number of clients: %d" % len(clients),
           file=log_fp, flush=True)
 
-    # Create the top server
-    top_server = TopServer(top_server_model, top_merged_update)
-
     # Create middle servers
-    mid_servers = setup_middle_servers(
-        mid_server_model, mid_merged_update, groups)
-    [mid_servers[i].brief(log_fp) for i in range(args.num_groups)]
+    middle_servers = setup_middle_servers(
+        middle_server_model, middle_merged_update, groups)
+    # [middle_servers[i].brief(log_fp) for i in range(args.num_groups)]
+    print("Total number of middle servers: %d" % len(middle_servers),
+          file=log_fp, flush=True)
+
+    # Create the top server
+    top_server = TopServer(
+        top_server_model, top_merged_update, middle_servers)
 
     # Display initial status
     print("--- Random Initialization ---",
@@ -95,16 +98,40 @@ def main():
         client_ids, client_groups, client_num_samples, args)
     sys_writer_fn = get_sys_writer_function(args)
     print_stats(
-        0, top_server, clients, client_num_samples,
-        stat_writer_fn, args.use_val_set, log_fp)
+        0, top_server, client_num_samples, stat_writer_fn,
+        args.use_val_set, log_fp)
 
-    # log_fp.close()
+    # Training simulation
+    for r in range(num_rounds):
+        print("--- Round %d of %d: Training %d clients ---"
+              % (r, num_rounds - 1, clients_per_group),
+              file=log_fp, flush=True)
+
+        # Select clients
+        top_server.select_clients(r, clients_per_group)
+        _ = get_clients_info(top_server.selected_clients)
+        c_ids, c_groups, c_num_samples = _
+
+        # Simulate server model training on selected clients' data
+        sys_metrics = top_server.train_model(args.num_syncs)
+        sys_writer_fn(r, c_ids, sys_metrics, c_groups, c_num_samples)
+
+        # Test model
+        if (r + 1) % eval_every == 0 or (r + 1) == num_rounds:
+            print_stats(
+                r, top_server, client_num_samples, stat_writer_fn,
+                args.use_val_set, log_fp)
+
+    top_server.save_model(log_dir)
+    log_fp.close()
 
 
-def create_clients(users, groups, train_data, test_data, model, num_groups):
+def create_clients(users, groups, train_data, test_data, model, args):
     if len(groups) == 0:
-        groups = [random.randint(0, num_groups-1) for _ in users]
-    clients = [Client(u, g, train_data[u], test_data[u], model)
+        groups = [random.randint(0, args.num_groups - 1)
+                  for _ in users]
+    clients = [Client(args.seed, u, g, train_data[u],
+                      test_data[u], model, args.batch_size)
                for u, g in zip(users, groups)]
     return clients
 
@@ -116,20 +143,21 @@ def group_clients(clients, num_groups):
     return groups
 
 
-def setup_clients(dataset, model=None, use_val_set=False, num_groups=10):
+def setup_clients(dataset, model, args):
     """Instantiates clients based on given train and test data directories.
     Return:
         all_clients: list of Client objects.
     """
-    eval_set = "test" if not use_val_set else "val"
+    eval_set = "test" if not args.use_val_set else "val"
     train_data_dir = os.path.join("data", dataset, "data", "train")
     test_data_dir = os.path.join("data", dataset, "data", eval_set)
 
     data = read_data(train_data_dir, test_data_dir)
     users, groups, train_data, test_data = data
 
-    clients = create_clients(users, groups, train_data, test_data, model, num_groups)
-    groups = group_clients(clients, num_groups)
+    clients = create_clients(
+        users, groups, train_data, test_data, model, args)
+    groups = group_clients(clients, args.num_groups)
     return clients, groups
 
 
@@ -146,13 +174,13 @@ def get_clients_info(clients):
 
 def setup_middle_servers(server_model, merged_update, groups):
     num_groups = len(groups)
-    mid_servers = [MidServer(g, server_model, merged_update, groups[g])
-                   for g in range(num_groups)]
-    return mid_servers
+    middle_servers = [
+        MiddleServer(g, server_model, merged_update, groups[g])
+        for g in range(num_groups)]
+    return middle_servers
 
 
 def get_stat_writer_function(ids, groups, num_samples, args):
-
     def writer_fn(num_round, metrics, partition):
         metrics_writer.print_metrics(
             num_round, ids, metrics, groups, num_samples, partition,
@@ -162,7 +190,6 @@ def get_stat_writer_function(ids, groups, num_samples, args):
 
 
 def get_sys_writer_function(args):
-
     def writer_fn(num_round, ids, metrics, groups, num_samples):
         metrics_writer.print_metrics(
             num_round, ids, metrics, groups, num_samples, "train",
@@ -171,14 +198,14 @@ def get_sys_writer_function(args):
     return writer_fn
 
 
-def print_stats(num_round, server, clients, num_samples, writer, use_val_set, log_fp=None):
-    train_stat_metrics = server.test_model(clients, set_to_use="train")
+def print_stats(num_round, server, num_samples, writer, use_val_set, log_fp=None):
+    train_stat_metrics = server.test_model(set_to_use="train")
     print_metrics(
         train_stat_metrics, num_samples, prefix="train_", log_fp=log_fp)
     writer(num_round, train_stat_metrics, "train")
 
     eval_set = "test" if not use_val_set else "val"
-    test_stat_metrics = server.test_model(clients, set_to_use=eval_set)
+    test_stat_metrics = server.test_model(set_to_use=eval_set)
     print_metrics(
         test_stat_metrics, num_samples, prefix="{}_".format(eval_set), log_fp=log_fp)
     writer(num_round, test_stat_metrics, eval_set)

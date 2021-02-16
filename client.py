@@ -2,10 +2,13 @@ import warnings
 import numpy as np
 from mxnet import nd
 
+from utils.model_utils import batch_data
+
 
 class Client:
 
-    def __init__(self, client_id, group, train_data, test_data, model):
+    def __init__(self, seed, client_id, group, train_data, test_data, model, batch_size):
+        self.seed = seed
         self._model = model
         self.id = client_id
         self.group = group
@@ -13,26 +16,22 @@ class Client:
             "x": self.process_data(train_data["x"]),
             "y": self.process_data(train_data["y"])
         }
+        self.train_data_iter = batch_data(
+            self.train_data, batch_size, seed=self.seed)
         self.test_data = {
             "x": self.process_data(test_data["x"]),
             "y": self.process_data(test_data["y"])
         }
 
-    def train(self, num_epochs=1, batch_size=10):
-        """Trains on self.model using the client's train_data.
-        Args:
-            num_epochs: Number of epochs to train.
-            batch_size: Size of training batches.
+    def train(self):
+        """Trains on self.model using one batch of train_data.
         Return:
             comp: number of FLOPs executed in training process
             num_samples: number of samples used in training
-            update: set of weights
-            update_size: number of bytes in update
+            update:
         """
-
-        comp, update = self.model.train(
-            self.train_data, num_epochs, batch_size)
-        return comp, self.num_train_samples, update
+        comp, num_samples, update = self.model.train(self.train_data_iter)
+        return comp, num_samples, update
 
     def test(self, set_to_use="test"):
         """Tests self.model on self.test_data.
@@ -47,6 +46,9 @@ class Client:
         elif set_to_use == "test" or set_to_use == "val":
             data = self.test_data
         return self.model.test(data)
+
+    def set_model(self, model):
+        self.model.set_params(model.get_params())
 
     @property
     def num_train_samples(self):

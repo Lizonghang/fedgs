@@ -24,16 +24,16 @@ def parse_args():
                         help="evaluate every _ rounds;",
                         type=int,
                         default=20)
-    parser.add_argument("--clients-per-round",
-                        help="number of clients trained per round;",
+    parser.add_argument("--clients-per-group",
+                        help="number of clients trained per group;",
                         type=int,
-                        default=100)
+                        default=10)
     parser.add_argument("--batch-size",
                         help="batch size when clients train on data;",
                         type=int,
                         default=5)
-    parser.add_argument("--num-epochs",
-                        help="number of epochs when clients train on data;",
+    parser.add_argument("--num-syncs",
+                        help="number of synchronizations in each group;",
                         type=int,
                         default=3)
     parser.add_argument("-lr",
