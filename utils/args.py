@@ -1,7 +1,6 @@
 import argparse
 
 DATASETS = ["sent140", "femnist", "shakespeare", "celeba", "synthetic", "reddit"]
-SIM_TIMES = ["small", "medium", "large"]
 
 
 def parse_args():
@@ -24,6 +23,10 @@ def parse_args():
                         help="evaluate every _ rounds;",
                         type=int,
                         default=20)
+    parser.add_argument("--num-groups",
+                        help="number of groups;",
+                        type=int,
+                        default=10)
     parser.add_argument("--clients-per-group",
                         help="number of clients trained per group;",
                         type=int,
@@ -35,15 +38,11 @@ def parse_args():
     parser.add_argument("--num-syncs",
                         help="number of synchronizations in each group;",
                         type=int,
-                        default=3)
+                        default=50)
     parser.add_argument("-lr",
                         help="learning rate for local optimizers;",
                         type=float,
                         default=0.01)
-    parser.add_argument("--num-groups",
-                        help="number of groups;",
-                        type=int,
-                        default=10)
     parser.add_argument("--seed",
                         help="seed for random client sampling and batch splitting;",
                         type=int,

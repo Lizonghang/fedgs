@@ -3,7 +3,8 @@ from mxnet.gluon.block import HybridBlock
 
 
 class CNN(HybridBlock):
-
+    """Conv(32) + Pooling + Conv(64) + Pooling + Flatten
+    + Dense(2048) + Dense(62)"""
     def __init__(self, num_classes, **kwargs):
         super(CNN, self).__init__(**kwargs)
 

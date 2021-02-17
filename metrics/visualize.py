@@ -1,7 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-
 import visualization_utils
 
 SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy

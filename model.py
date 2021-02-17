@@ -23,7 +23,7 @@ class Model(ABC):
 
     @property
     def optimizer(self):
-        """Optimizer to be used by the model."""
+        """Optimizer to be used, the default is SGD optimizer."""
         if self._optimizer is None:
             self._optimizer = "sgd"
 
@@ -34,22 +34,22 @@ class Model(ABC):
         """Creates the model for the task.
         Returns:
             A 3-tuple consisting of:
-                net: A neural network workflow.
-                loss: An operation that, when run with the features and the
-                    labels, computes the loss value.
-                train_op: An operation that, when grads are computed, trains
-                    the model.
+                net: A neural network.
+                loss: An operation to compute the loss value.
+                train_op: An operation to train the model.
         """
         return None, None, None
 
     def train(self, data_iter):
         """
-        Trains the client model.
+        Train the model using a batch of data.
         Args:
-            data: Dict of the form {'x': NDArray, 'y': NDArray}.
-            batch_size: Size of training batches.
-        Return:
-            comp: Number of FLOPs computed while training given data
+            data_iter: An iterator to generate batches of train data.
+        Returns:
+            comp: Number of FLOPs computed while training given data.
+                If --count-op is not set, FLOPs = 0 will be returned.
+            num_samples: Number of samples used to train given data.
+            update: The model after training given data.
         """
         batched_x, batched_y = next(data_iter)
         input_data = self.preprocess_x(batched_x)
@@ -61,6 +61,7 @@ class Model(ABC):
             ls = self.loss(y_hats, target_data)
             ls.backward()
         self.trainer.step(num_samples)
+        # Wait to avoid running out of GPU memory
         nd.waitall()
 
         update = self.get_params()
@@ -68,12 +69,12 @@ class Model(ABC):
         return comp, num_samples, update
 
     def __num_elems(self, shape):
-        '''Returns the number of elements in the given shape
+        """Returns the number of elements in the given shape.
         Args:
-            shape: Parameter shape
+            shape: Parameter shape.
         Return:
-            tot_elems: int
-        '''
+            tot_elems: Number of elements.
+        """
         tot_elems = 1
         for s in shape:
             tot_elems *= int(s)
@@ -81,14 +82,14 @@ class Model(ABC):
 
     @property
     def size(self):
-        '''Returns the size of the network in bytes
+        """Returns the size of the network in bytes.
         The size of the network is calculated by summing up the sizes of each
         trainable variable. The sizes of variables are calculated by multiplying
         the number of bytes in their dtype with their number of elements, captured
-        in their shape attribute
+        in their shape attribute.
         Return:
-            integer representing size of graph (in bytes)
-        '''
+            tot_size: Integer representing size of neural network (in bytes).
+        """
         params = self.net.collect_params().values()
         tot_size = 0
         for p in params:
@@ -104,12 +105,12 @@ class Model(ABC):
         network.
         The package MXOP is required:
             https://github.com/hey-yahei/OpSummary.MXNet
-        Run "pip install --index-url https://pypi.org/simple/ mxop" to install.
-        MXOP can only run on cpu device, so the context is reset to cpu and then
-        reset back to the specified device.
-        If MXOP is not installed, 0 will be returned.
+        Note that "pip install --index-url https://pypi.org/simple/ mxop" may
+        change the version of the dependent package. Due to MXOP runs on CPU,
+        the context is reset to cpu and then reset back to the specified device.
+        If MXOP is not installed, 0 will be directly returned.
         Return:
-            integer representing the number of flops
+            flops: Integer representing the number of flops.
         """
         try:
             from mxop.gluon import count_ops
@@ -122,6 +123,10 @@ class Model(ABC):
             return 0
 
     def set_params(self, model_params):
+        """Set current model data to given model data.
+        Args:
+            model_params: Given model data.
+        """
         source_params = list(model_params)
         target_params = list(self.get_params())
         num_params = len(target_params)
@@ -129,28 +134,38 @@ class Model(ABC):
             target_params[p].set_data(source_params[p].data())
 
     def get_params(self):
+        """Return current model data.
+        Returns:
+            params: Current model data.
+        """
         return self.net.collect_params().values()
 
     def set_context(self, ctx):
+        """Move current model to the specified context.
+        Args:
+            ctx: The specified CPU or GPU context.
+        """
         self.net.collect_params().reset_ctx(ctx)
 
     @abstractmethod
     def test(self, data):
-        """
-        Tests the current model on the given data.
+        """Tests the current model on the given data.
         Args:
-            data: dict of the form {'x': [list], 'y': [list]}
-        Return:
-            dict of metrics that will be recorded by the simulation.
+            data: Dict of the form {"x": NDArray, "y": NDArray}
+        Returns:
+            stat_metrics: dict of metrics that will be recorded
+                by the simulation.
         """
         return None
 
     @abstractmethod
     def preprocess_x(self, raw_x_batch):
-        """Pre-processes each batch of features before being fed to the model."""
+        """Pre-processes each batch of train data before being
+            fed to the model."""
         return None
 
     @abstractmethod
     def preprocess_y(self, raw_y_batch):
-        """Pre-processes each batch of labels before being fed to the model."""
+        """Pre-processes each batch of labels before being fed
+            to the model."""
         return None

@@ -14,13 +14,35 @@ class Server(ABC):
 
     @abstractmethod
     def select_clients(self, my_round, clients_per_group):
+        """Select clients_per_group clients from each group.
+        Args:
+            my_round: The current training round, used for
+                random sampling.
+            clients_per_group: Number of clients to select in
+                each group.
+        Returns:
+            selected_clients: List of clients being selected.
+            client_info: List of (num_train_samples, num_test_samples)
+                of selected clients.
+        """
         return None
 
     @abstractmethod
     def train_model(self, num_syncs):
+        """Aggregate clients' models after each iteration. If
+        num_syncs synchronizations are reached, middle servers'
+        models are then aggregated at the top server.
+        Args:
+            num_syncs: Number of client - middle server synchronizations
+                in each round before sending to the top server.
+        Returns:
+            metrics: Dict of metrics returned by the model.
+            update: The model after training num_syncs synchronizations.
+        """
         return None
 
     def update_model(self):
+        """Update self.model with averaged merged update."""
         merged_update_ = list(self.merged_update.get_params())
         num_params = len(merged_update_)
 
@@ -35,9 +57,19 @@ class Server(ABC):
 
     @abstractmethod
     def test_model(self, set_to_use):
+        """Test self.model on all clients.
+        Args:
+            set_to_use: Dataset to test on, either "train" or "test".
+        Returns:
+            metrics: Dict of metrics returned by the model.
+        """
         return None
 
     def save_model(self, log_dir):
+        """Save self.model to specified directory.
+        Args:
+            log_dir: Directory to save model file.
+        """
         self.model.save(log_dir)
 
 
@@ -50,12 +82,17 @@ class TopServer(Server):
         super(TopServer, self).__init__(server_model, merged_update)
 
     def register_middle_servers(self, servers):
+        """Register middle servers.
+        Args:
+            servers: Middle servers to be registered.
+        """
         if type(servers) == MiddleServer:
             servers = [servers]
 
         self.middle_servers.extend(servers)
 
     def select_clients(self, my_round, clients_per_group):
+        """Call middle servers to select clients."""
         selected_info = []
         self.selected_clients = []
 
@@ -68,6 +105,8 @@ class TopServer(Server):
         return selected_info
 
     def train_model(self, num_syncs):
+        """Call middle servers to train their models and aggregate
+        their updates."""
         sys_metrics = {}
 
         for s in self.middle_servers:
@@ -82,6 +121,13 @@ class TopServer(Server):
         return sys_metrics
 
     def merge_updates(self, num_clients, update):
+        """Aggregate updates from middle servers based on the
+        number of selected clients.
+        Args:
+            num_clients: Number of selected clients for this
+                middle server.
+            update: The model trained by this middle server.
+        """
         merged_update_ = list(self.merged_update.get_params())
         current_update_ = list(update)
         num_params = len(merged_update_)
@@ -94,6 +140,7 @@ class TopServer(Server):
                 (num_clients * current_update_[p].data()))
 
     def test_model(self, set_to_use="test"):
+        """Call middle servers to test their models."""
         metrics = {}
 
         for middle_server in self.middle_servers:
@@ -114,12 +161,19 @@ class MiddleServer(Server):
         super(MiddleServer, self).__init__(server_model, merged_update)
 
     def register_clients(self, clients):
+        """Register clients of this middle server.
+        Args:
+            clients: Clients to be registered.
+        """
         if type(clients) is not list:
             clients = [clients]
 
         self.clients.extend(clients)
 
     def select_clients(self, my_round, clients_per_group):
+        """Randomly select clients_per_group clients for this round.
+        TODO(Yihong): Add approximate i.i.d. selection algorithm.
+        """
         num_clients = min(clients_per_group, len(self.clients))
         np.random.seed(my_round)
         self.selected_clients = np.random.choice(
@@ -129,6 +183,7 @@ class MiddleServer(Server):
         return self.selected_clients, info
 
     def train_model(self, num_syncs):
+        """Train self.model for num_syncs synchronizations."""
         clients = self.selected_clients
 
         s_sys_metrics = {
@@ -153,6 +208,12 @@ class MiddleServer(Server):
         return s_sys_metrics, update
 
     def merge_updates(self, client_samples, update):
+        """Aggregate updates from clients based on the size
+        of batched data.
+        Args:
+            client_samples: Size of batched data used by this client.
+            update: The model trained by this client.
+        """
         merged_update_ = list(self.merged_update.get_params())
         current_update_ = list(update)
         num_params = len(merged_update_)
@@ -165,6 +226,7 @@ class MiddleServer(Server):
                 (client_samples * current_update_[p].data()))
 
     def test_model(self, set_to_use="test"):
+        """Test self.model on online clients."""
         s_metrics = {}
 
         for client in self.online(self.clients):
@@ -175,46 +237,72 @@ class MiddleServer(Server):
         return s_metrics
 
     def set_model(self, model):
+        """Set the model data to specified model.
+        Args:
+            model: The specified model.
+        """
         self.model.set_params(model.get_params())
 
     def online(self, clients):
+        """Return clients that are online.
+        Args:
+            clients: List of all clients registered at this
+                middle server.
+        Returns:
+            online_clients: List of all online clients.
+        """
         online_clients = clients
         assert len(online_clients) != 0, "No client available."
         return online_clients
 
     @property
     def num_clients(self):
+        """Return the number of all clients registered at this
+        middle server."""
         return len(self.clients)
 
     @property
     def num_selected_clients(self):
+        """Return the number of selected clients."""
         return len(self.selected_clients)
 
     @property
     def num_samples(self):
+        """Return the total number of samples for self.clients."""
         return sum([c.num_samples for c in self.clients])
 
     @property
     def num_train_samples(self):
+        """Return the total number of train samples for
+        self.clients."""
         return sum([c.num_train_samples for c in self.clients])
 
     @property
     def num_test_samples(self):
+        """Return the total number of test samples for
+        self.clients."""
         return sum([c.num_test_samples for c in self.clients])
 
     @property
     def train_sample_dist(self):
+        """Return the distribution of train data for
+        self.clients."""
         return sum([c.train_sample_dist for c in self.clients])
 
     @property
     def test_sample_dist(self):
+        """Return the distribution of test data for
+        self.clients."""
         return sum([c.test_sample_dist for c in self.clients])
 
     @property
     def sample_dist(self):
+        """Return the distribution of overall data for
+        self.clients."""
         return self.train_sample_dist + self.test_sample_dist
 
     def brief(self, log_fp):
+        """Briefly summarize the statistics of this middle server"""
         print("[Group %i] Number of clients: %i, number of samples: %i, "
               "number of train samples: %s, number of test samples: %i, "
               % (self.server_id, self.num_clients, self.num_samples,

@@ -1,5 +1,4 @@
 import os
-import numpy as np
 from mxnet import init, nd
 
 from utils.model_utils import build_net
@@ -16,7 +15,11 @@ class ServerModel:
         self.create_model()
 
     def create_model(self):
-        """build and synchronize the server model"""
+        """Build and initialize the server model. If self.client_model is
+        given, this ServerModel object is created for the server model,
+        otherwise for the merged update. The server model will be synchronized
+        with the client model, and the merged update will be initialized to zero.
+        """
         self.model = build_net(
             self.dataset, self.model_name, self.num_classes, self.ctx)
 
@@ -27,13 +30,20 @@ class ServerModel:
                 init.Zero(), ctx=self.ctx, force_reinit=True)
 
     def reset_zero(self):
-        # Force reinit will lead to higher cpu usage.
-        # self.model.initialize(
-        #     init.Zero(), ctx=self.ctx, force_reinit=True)
-
+        """Reset the model data to zero, usually used to reset the merged update.
+        Note that force reinit the model data with:
+            self.model.initialize(
+                init.Zero(), ctx=self.ctx, force_reinit=True)
+        will leads to high cpu usage.
+        """
         self.set_params([])
 
     def set_params(self, model_params):
+        """Set the model data to the specified data. If an empty list is given,
+        the model data will be set to zero.
+        Args:
+            model_params: The specified model data.
+        """
         source_params = list(model_params)
         target_params = list(self.get_params())
         num_params = len(target_params)
@@ -46,38 +56,11 @@ class ServerModel:
             target_params[p].set_data(data)
 
     def get_params(self):
+        """Return current model data.
+        Returns:
+            params: The current model data.
+        """
         return self.model.collect_params().values()
-
-    def __num_elems(self, shape):
-        '''Returns the number of elements in the given shape
-        Args:
-            shape: Parameter shape
-        Return:
-            tot_elems: int
-        '''
-        tot_elems = 1
-        for s in shape:
-            tot_elems *= int(s)
-        return tot_elems
-
-    @property
-    def size(self):
-        '''Returns the size of the network in bytes
-        The size of the network is calculated by summing up the sizes of each
-        trainable variable. The sizes of variables are calculated by multiplying
-        the number of bytes in their dtype with their number of elements, captured
-        in their shape attribute
-        Return:
-            integer representing size of graph (in bytes)
-        '''
-        params = self.model.collect_params().values()
-        tot_size = 0
-        for p in params:
-            tot_elems = self.__num_elems(p.shape)
-            dtype_size = np.dtype(p.dtype).itemsize
-            var_size = tot_elems * dtype_size
-            tot_size += var_size
-        return tot_size
 
     def save(self, log_dir):
         """Saves the server model to:

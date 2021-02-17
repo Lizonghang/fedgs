@@ -25,7 +25,7 @@ class Client:
 
     def train(self):
         """Trains on self.model using one batch of train_data.
-        Return:
+        Returns:
             comp: number of FLOPs executed in training process
             num_samples: number of samples used in training
             update:
@@ -36,9 +36,9 @@ class Client:
     def test(self, set_to_use="test"):
         """Tests self.model on self.test_data.
         Args:
-            set_to_use. Set to test on. Should be in ["train", "test"].
-        Return:
-            dict of metrics returned by the model.
+            set_to_use: Set to test on. Should be in ["train", "test"].
+        Returns:
+            metrics: Dict of metrics returned by the model.
         """
         assert set_to_use in ["train", "test", "val"]
         if set_to_use == "train":
@@ -48,34 +48,30 @@ class Client:
         return self.model.test(data)
 
     def set_model(self, model):
+        """Set the model data to specified model.
+        Args:
+            model: The specified model.
+        """
         self.model.set_params(model.get_params())
 
     @property
     def num_train_samples(self):
-        """Number of train samples for this client.
-        Return:
-            int: Number of train samples for this client
-        """
+        """Return the number of train samples for this client."""
         return len(self.train_data["y"])
 
     @property
     def num_test_samples(self):
-        """Number of test samples for this client.
-        Return:
-            int: Number of test samples for this client
-        """
+        """Return the number of test samples for this client."""
         return len(self.test_data["y"])
 
     @property
     def num_samples(self):
-        """Number of samples for this client (train + test).
-        Return:
-            int: Number of samples for this client
-        """
+        """Return the number of train + test samples for this client."""
         return self.num_train_samples + self.num_test_samples
 
     @property
     def train_sample_dist(self):
+        """Return the distribution of train data for this client."""
         labels = self.train_data["y"]
         labels = labels.asnumpy().astype("int64")
         dist = np.bincount(labels)
@@ -87,6 +83,7 @@ class Client:
 
     @property
     def test_sample_dist(self):
+        """Return the distribution of test data for this client."""
         labels = self.test_data["y"]
         labels = labels.asnumpy().astype("int64")
         dist = np.bincount(labels)
@@ -98,6 +95,7 @@ class Client:
 
     @property
     def sample_dist(self):
+        """Return the distribution of overall data for this client."""
         return self.train_sample_dist + self.test_sample_dist
 
     @property
@@ -107,9 +105,16 @@ class Client:
 
     @model.setter
     def model(self, model):
-        warnings.warn('The current implementation shares the model among all clients.'
-                      'Setting it on one client will effectively modify all clients.')
+        warnings.warn("The current implementation shares the model among all clients."
+                      "Setting it on one client will effectively modify all clients.")
         self._model = model
 
     def process_data(self, data):
+        """Convert train data and test data to NDArray objects with
+        specified context.
+        Args:
+            data: List of train vectors or labels.
+        Returns:
+            nd_data: Format NDArray data with specified context.
+        """
         return nd.array(data, ctx=self.model.ctx)
