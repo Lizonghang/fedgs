@@ -103,14 +103,13 @@ def main():
 
     # Training simulation
     for r in range(num_rounds):
-        print("--- Round %d of %d: Training %d clients ---"
-              % (r, num_rounds - 1, clients_per_group),
-              file=log_fp, flush=True)
-
         # Select clients
         top_server.select_clients(r, clients_per_group)
         _ = get_clients_info(top_server.selected_clients)
         c_ids, c_groups, c_num_samples = _
+        print("--- Round %d of %d: Training %d clients ---"
+              % (r, num_rounds - 1, len(c_ids)),
+              file=log_fp, flush=True)
 
         # Simulate server model training on selected clients' data
         sys_metrics = top_server.train_model(args.num_syncs)
