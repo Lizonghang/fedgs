@@ -82,10 +82,10 @@ def build_net(dataset, model_name, num_classes, ctx, init=init.Xavier()):
     if not os.path.exists(model_file):
         print('Please specify a valid model.')
     model_path = "%s.%s" % (dataset, model_name)
-
-    # build network
     mod = importlib.import_module(model_path)
     build_net_op = getattr(mod, "build_net")
+
+    # build network
     net = build_net_op(num_classes)
 
     # initialize network

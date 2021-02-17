@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from mxnet import init
+from mxnet import init, nd
 
 from utils.model_utils import build_net
 
@@ -27,15 +27,23 @@ class ServerModel:
                 init.Zero(), ctx=self.ctx, force_reinit=True)
 
     def reset_zero(self):
-        self.model.initialize(
-            init.Zero(), ctx=self.ctx, force_reinit=True)
+        # Force reinit will lead to higher cpu usage.
+        # self.model.initialize(
+        #     init.Zero(), ctx=self.ctx, force_reinit=True)
+
+        self.set_params([])
 
     def set_params(self, model_params):
         source_params = list(model_params)
         target_params = list(self.get_params())
         num_params = len(target_params)
+
         for p in range(num_params):
-            target_params[p].set_data(source_params[p].data())
+            if source_params:
+                data = source_params[p].data()
+            else:
+                data = nd.zeros(target_params[p].shape, ctx=self.ctx)
+            target_params[p].set_data(data)
 
     def get_params(self):
         return self.model.collect_params().values()

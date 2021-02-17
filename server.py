@@ -55,7 +55,7 @@ class TopServer(Server):
 
         self.middle_servers.extend(servers)
 
-    def select_clients(self, my_round, clients_per_group=10):
+    def select_clients(self, my_round, clients_per_group):
         selected_info = []
         self.selected_clients = []
 
@@ -73,7 +73,7 @@ class TopServer(Server):
         for s in self.middle_servers:
             s.set_model(self.model)
             s_sys_metrics, update = s.train_model(num_syncs)
-            self.merge_updates(s.num_clients, update)
+            self.merge_updates(s.num_selected_clients, update)
 
             sys_metrics.update(s_sys_metrics)
 
@@ -119,9 +119,8 @@ class MiddleServer(Server):
 
         self.clients.extend(clients)
 
-    def select_clients(self, my_round, clients_per_group=10):
+    def select_clients(self, my_round, clients_per_group):
         num_clients = min(clients_per_group, len(self.clients))
-        # TODO: Check whether the selected clients in each round are the same
         np.random.seed(my_round)
         self.selected_clients = np.random.choice(
             self.online(self.clients), num_clients, replace=False)
@@ -186,6 +185,10 @@ class MiddleServer(Server):
     @property
     def num_clients(self):
         return len(self.clients)
+
+    @property
+    def num_selected_clients(self):
+        return len(self.selected_clients)
 
     @property
     def num_samples(self):

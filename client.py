@@ -9,19 +9,19 @@ class Client:
 
     def __init__(self, seed, client_id, group, train_data, test_data, model, batch_size):
         self.seed = seed
-        self._model = model
         self.id = client_id
         self.group = group
+        self._model = model
         self.train_data = {
             "x": self.process_data(train_data["x"]),
             "y": self.process_data(train_data["y"])
         }
-        self.train_data_iter = batch_data(
-            self.train_data, batch_size, seed=self.seed)
         self.test_data = {
             "x": self.process_data(test_data["x"]),
             "y": self.process_data(test_data["y"])
         }
+        self.train_data_iter = batch_data(
+            self.train_data, batch_size, seed=self.seed)
 
     def train(self):
         """Trains on self.model using one batch of train_data.

@@ -26,7 +26,6 @@ def main():
     log_fn = "output.%i" % args.log_rank
     log_file = os.path.join(log_dir, log_fn)
     log_fp = open(log_file, "w+")
-    # log_fp = None
 
     # Set the random seed, affects client sampling and batching
     random.seed(1 + args.seed)
@@ -40,6 +39,8 @@ def main():
             or not os.path.exists(server_path):
         print("Please specify a valid dataset.",
               file=log_fp, flush=True)
+        return
+
     client_path = "%s.client_model" % args.dataset
     server_path = "%s.server_model" % args.dataset
     mod = importlib.import_module(client_path)
@@ -73,8 +74,7 @@ def main():
         None, args.dataset, args.model, num_classes, ctx)
 
     # Create clients
-    clients, groups = setup_clients(
-        args.dataset, client_model, args)
+    clients, groups = setup_clients(client_model, args)
     _ = get_clients_info(clients)
     client_ids, client_groups, client_num_samples = _
     print("Total number of clients: %d" % len(clients),
@@ -129,9 +129,11 @@ def create_clients(users, groups, train_data, test_data, model, args):
     if len(groups) == 0:
         groups = [random.randint(0, args.num_groups - 1)
                   for _ in users]
+
     clients = [Client(args.seed, u, g, train_data[u],
                       test_data[u], model, args.batch_size)
                for u, g in zip(users, groups)]
+
     return clients
 
 
@@ -142,21 +144,23 @@ def group_clients(clients, num_groups):
     return groups
 
 
-def setup_clients(dataset, model, args):
+def setup_clients(model, args):
     """Instantiates clients based on given train and test data directories.
     Return:
         all_clients: list of Client objects.
     """
     eval_set = "test" if not args.use_val_set else "val"
-    train_data_dir = os.path.join("data", dataset, "data", "train")
-    test_data_dir = os.path.join("data", dataset, "data", eval_set)
+    train_data_dir = os.path.join("data", args.dataset, "data", "train")
+    test_data_dir = os.path.join("data", args.dataset, "data", eval_set)
 
     data = read_data(train_data_dir, test_data_dir)
     users, groups, train_data, test_data = data
 
     clients = create_clients(
         users, groups, train_data, test_data, model, args)
+
     groups = group_clients(clients, args.num_groups)
+
     return clients, groups
 
 
