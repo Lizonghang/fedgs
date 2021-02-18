@@ -59,7 +59,7 @@ def main():
 
     # Create the shared client model
     client_model = ClientModel(
-        args.seed, args.dataset, args.model, ctx, args.count_ops, *model_params)
+        args.seed, args.dataset, args.model, ctx, *model_params)
 
     # Create the shared middle server model
     middle_server_model = ServerModel(

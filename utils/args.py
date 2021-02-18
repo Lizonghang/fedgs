@@ -66,10 +66,6 @@ def parse_args():
     parser.add_argument("--use-val-set",
                         help="use validation set;",
                         action="store_true")
-    parser.add_argument("--count-ops",
-                        help="count float operations. Enable this will increase the "
-                             "cpu usage and slow down training;",
-                        action="store_true")
     parser.add_argument("-ctx",
                         help="device for training, -1 for cpu and 0~3 for gpu;",
                         type=int,

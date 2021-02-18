@@ -7,11 +7,11 @@ from utils.model_utils import build_net
 
 
 class ClientModel(Model):
-    def __init__(self, seed, dataset, model_name, ctx, count_ops, lr, num_classes):
+    def __init__(self, seed, dataset, model_name, ctx, lr, num_classes):
         self.dataset = dataset
         self.model_name = model_name
         self.num_classes = num_classes
-        super(ClientModel, self).__init__(seed, lr, ctx, count_ops=count_ops)
+        super(ClientModel, self).__init__(seed, lr, ctx)
 
     def create_model(self):
         # Build a simple cnn network

@@ -9,17 +9,16 @@ from baseline_constants import INPUT_SIZE
 
 class Model(ABC):
 
-    def __init__(self, seed, lr, ctx, optimizer=None, count_ops=False):
+    def __init__(self, seed, lr, ctx, optimizer=None):
+        mx.random.seed(123 + seed)
+        np.random.seed(seed)
+
         self.lr = lr
         self.seed = seed
         self._optimizer = optimizer
         self.ctx = ctx
-        self.count_ops = count_ops
-
-        mx.random.seed(123 + self.seed)
-        np.random.seed(self.seed)
-
         self.net, self.loss, self.trainer = self.create_model()
+        self.flops_per_sample = self.calc_flops()
 
     @property
     def optimizer(self):
@@ -67,14 +66,14 @@ class Model(ABC):
         nd.waitall()
 
         update = self.get_params()
-        comp = num_samples * self.flops if self.count_ops else 0
+        comp = num_samples * self.flops_per_sample
         return comp, num_samples, update
 
     def __num_elems(self, shape):
         """Returns the number of elements in the given shape.
         Args:
             shape: Parameter shape.
-        Return:
+        Returns:
             tot_elems: Number of elements.
         """
         tot_elems = 1
@@ -89,7 +88,7 @@ class Model(ABC):
         trainable variable. The sizes of variables are calculated by multiplying
         the number of bytes in their dtype with their number of elements, captured
         in their shape attribute.
-        Return:
+        Returns:
             tot_size: Integer representing size of neural network (in bytes).
         """
         params = self.net.collect_params().values()
@@ -101,17 +100,17 @@ class Model(ABC):
             tot_size += var_size
         return tot_size
 
-    @property
-    def flops(self):
+    def calc_flops(self):
         """Returns the number of flops needed to propagate a sample through the
         network.
         The package MXOP is required:
             https://github.com/hey-yahei/OpSummary.MXNet
-        Note that "pip install --index-url https://pypi.org/simple/ mxop" may
-        change the version of the dependent package. Due to MXOP runs on CPU,
-        the context is reset to cpu and then reset back to the specified device.
-        If MXOP is not installed, 0 will be directly returned.
-        Return:
+        If MXOP is not installed, 0 will be directly returned. Note that
+            pip install --index-url https://pypi.org/simple/ mxop
+        may change the version of the dependent package.
+        Since MXOP runs on CPU, the context is set to cpu and then reset back
+        to the specified device.
+        Returns:
             flops: Integer representing the number of flops.
         """
         try:
