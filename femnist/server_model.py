@@ -20,19 +20,19 @@ class ServerModel:
         otherwise for the merged update. The server model will be synchronized
         with the client model, and the merged update will be initialized to zero.
         """
-        self.model = build_net(
+        self.net = build_net(
             self.dataset, self.model_name, self.num_classes, self.ctx)
 
         if self.client_model:
             self.set_params(self.client_model.get_params())
         else:
-            self.model.initialize(
+            self.net.initialize(
                 init.Zero(), ctx=self.ctx, force_reinit=True)
 
     def reset_zero(self):
         """Reset the model data to zero, usually used to reset the merged update.
         Note that force reinit the model data with:
-            self.model.initialize(
+            self.net.initialize(
                 init.Zero(), ctx=self.ctx, force_reinit=True)
         will leads to high cpu usage.
         """
@@ -60,11 +60,11 @@ class ServerModel:
         Returns:
             params: The current model data.
         """
-        return self.model.collect_params().values()
+        return self.net.collect_params().values()
 
     def save(self, log_dir):
         """Saves the server model to:
             {log_dir}/{self.model_name}.params
         """
-        self.model.save_parameters(
+        self.net.save_parameters(
             os.path.join(log_dir, self.model_name + ".params"))

@@ -129,6 +129,7 @@ def main():
 
 def create_clients(users, groups, train_data, test_data, model, args):
     # Randomly assign a group to each client, if groups are not given
+    random.seed(args.seed)
     if len(groups) == 0:
         groups = [random.randint(0, args.num_groups - 1)
                   for _ in users]

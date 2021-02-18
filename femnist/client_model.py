@@ -16,7 +16,7 @@ class ClientModel(Model):
     def create_model(self):
         # Build a simple cnn network
         net = build_net(
-            self.dataset, self.model_name, self.num_classes, self.ctx)
+            self.dataset, self.model_name, self.num_classes, self.ctx, self.seed)
 
         # Use softmax cross-entropy loss
         loss = gloss.SoftmaxCrossEntropyLoss()
@@ -47,4 +47,4 @@ class ClientModel(Model):
         return raw_x_batch.reshape((-1, *INPUT_SIZE))
 
     def preprocess_y(self, raw_y_batch):
-        return raw_y_batch.astype("float32")
+        return raw_y_batch

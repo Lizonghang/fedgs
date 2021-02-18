@@ -56,6 +56,8 @@ class Model(ABC):
         target_data = self.preprocess_y(batched_y)
         num_samples = len(batched_y)
 
+        # Set MXNET_ENFORCE_DETERMINISM=1 to avoid difference in
+        # calculation precision.
         with autograd.record():
             y_hats = self.net(input_data)
             ls = self.loss(y_hats, target_data)

@@ -26,6 +26,7 @@ sudo docker run -dit \
                 -h ${HOST_NAME} \
                 --gpus all \
                 -e MXNET_CUDNN_AUTOTUNE_DEFAULT=0 \
+                -e MXNET_ENFORCE_DETERMINISM=1 \
                 -v /etc/localtime:/etc/localtime \
                 -v /home/lizh/fedmix:/root \
                 ${IMAGE_NAME}

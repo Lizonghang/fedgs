@@ -21,11 +21,12 @@ def batch_data(data, batch_size, seed):
     data_x = data['x']
     data_y = data['y']
 
+    epochs = 0
     while True:
         # randomly shuffle data
-        mx.random.seed(seed)
+        mx.random.seed(seed + epochs)
         mx.random.shuffle(data_x)
-        mx.random.seed(seed)
+        mx.random.seed(seed + epochs)
         mx.random.shuffle(data_y)
 
         # loop through mini-batches
@@ -35,6 +36,8 @@ def batch_data(data, batch_size, seed):
             batched_x = data_x[l:r]
             batched_y = data_y[l:r]
             yield batched_x, batched_y
+
+        epochs += 1
 
 
 def read_dir(data_dir):
@@ -81,7 +84,7 @@ def read_data(train_data_dir, test_data_dir):
     return train_clients, train_groups, train_data, test_data
 
 
-def build_net(dataset, model_name, num_classes, ctx, init=init.Xavier()):
+def build_net(dataset, model_name, num_classes, ctx, seed=0, init=init.Xavier()):
     """Build neural network from the file {dataset}/{model_name}.py.
     Args:
         dataset: Name of dataset.
@@ -103,6 +106,7 @@ def build_net(dataset, model_name, num_classes, ctx, init=init.Xavier()):
     net = build_net_op(num_classes)
 
     # initialize network
+    mx.random.seed(seed)
     net.initialize(init=init, ctx=ctx)
     net(nd.random.uniform(shape=(1, *INPUT_SIZE), ctx=ctx))
 
