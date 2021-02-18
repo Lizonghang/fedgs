@@ -102,14 +102,14 @@ def main():
         args.use_val_set, log_fp)
 
     # Training simulation
-    for r in range(num_rounds):
+    for r in range(1, num_rounds + 1):
         # Select clients
         top_server.select_clients(r, clients_per_group)
         _ = get_clients_info(top_server.selected_clients)
         c_ids, c_groups, c_num_samples = _
 
         print("--- Round %d of %d: Training %d clients ---"
-              % (r, num_rounds - 1, len(c_ids)),
+              % (r, num_rounds, len(c_ids)),
               file=log_fp, flush=True)
 
         # Simulate server model training on selected clients' data
@@ -117,7 +117,7 @@ def main():
         sys_writer_fn(r, c_ids, sys_metrics, c_groups, c_num_samples)
 
         # Test model
-        if (r + 1) % eval_every == 0 or (r + 1) == num_rounds:
+        if r % eval_every == 0 or r == num_rounds:
             print_stats(
                 r, top_server, client_num_samples, stat_writer_fn,
                 args.use_val_set, log_fp)
