@@ -44,19 +44,19 @@ def load_data(stat_metrics_file, sys_metrics_file):
 
 def _set_plot_properties(properties):
     """Sets some plt properties."""
-    if 'xlim' in properties:
-        plt.xlim(properties['xlim'])
-    if 'ylim' in properties:
-        plt.ylim(properties['ylim'])
-    if 'xlabel' in properties:
-        plt.xlabel(properties['xlabel'])
-    if 'ylabel' in properties:
-        plt.ylabel(properties['ylabel'])
+    if "xlim" in properties:
+        plt.xlim(properties["xlim"])
+    if "ylim" in properties:
+        plt.ylim(properties["ylim"])
+    if "xlabel" in properties:
+        plt.xlabel(properties["xlabel"])
+    if "ylabel" in properties:
+        plt.ylabel(properties["ylabel"])
 
 
 def plot_accuracy_vs_round_number(
         stat_metrics, weighted=False, plot_stds=False, figsize=(6, 4.5),  **kwargs):
-    """Plots the clients' average test accuracy vs. the round number.
+    """Plots the clients" average test accuracy vs. the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -64,17 +64,19 @@ def plot_accuracy_vs_round_number(
             test samples.
         plot_stds: Whether to plot error bars corresponding to the std between users.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
+        title_fontsize: Font size for the plot"s title.
         kwargs: Arguments to be passed to _set_plot_properties.
     """
     plt.figure(figsize=figsize)
-    title_weighted = 'Weighted' if weighted else 'Unweighted'
-    plt.title('Accuracy vs Round Number (%s)' % title_weighted, fontsize=title_fontsize)
+    title_weighted = "Weighted" if weighted else "Unweighted"
+    plt.title("Accuracy vs Round Number (%s)" % title_weighted, fontsize=title_fontsize)
     if weighted:
-        accuracies = stat_metrics.groupby(NUM_ROUND_KEY).apply(_weighted_mean, ACCURACY_KEY, NUM_SAMPLES_KEY)
+        accuracies = stat_metrics.groupby(NUM_ROUND_KEY)\
+            .apply(_weighted_mean, ACCURACY_KEY, NUM_SAMPLES_KEY)
         accuracies = accuracies.reset_index(name=ACCURACY_KEY)
 
-        stds = stat_metrics.groupby(NUM_ROUND_KEY).apply(_weighted_std, ACCURACY_KEY, NUM_SAMPLES_KEY)
+        stds = stat_metrics.groupby(NUM_ROUND_KEY)\
+            .apply(_weighted_std, ACCURACY_KEY, NUM_SAMPLES_KEY)
         stds = stds.reset_index(name=ACCURACY_KEY)
     else:
         accuracies = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).mean()
@@ -88,14 +90,17 @@ def plot_accuracy_vs_round_number(
     percentile_10 = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).quantile(0.1)
     percentile_90 = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).quantile(0.9)
 
-    plt.plot(percentile_10[NUM_ROUND_KEY], percentile_10[ACCURACY_KEY], linestyle=':')
-    plt.plot(percentile_90[NUM_ROUND_KEY], percentile_90[ACCURACY_KEY], linestyle=':')
+    plt.plot(percentile_10[NUM_ROUND_KEY], percentile_10[ACCURACY_KEY], linestyle=":")
+    plt.plot(percentile_90[NUM_ROUND_KEY], percentile_90[ACCURACY_KEY], linestyle=":")
 
-    plt.legend(['Mean', '10th percentile', '90th percentile'], loc='upper left', fontsize=legend_fontsize)
+    plt.legend(["Mean", "10th percentile", "90th percentile"],
+               loc="lower right", fontsize=legend_fontsize)
 
-    plt.ylabel('Accuracy', fontsize=label_fontsize)
-    plt.xlabel('Round Number', fontsize=label_fontsize)
+    plt.ylabel("Accuracy", fontsize=label_fontsize)
+    plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 500))
+    plt.ylim((0, 1))
     _set_plot_properties(kwargs)
     plt.show()
 
@@ -120,21 +125,22 @@ def _weighted_std(df, metric_name, weight_name):
 
 
 def plot_accuracy_vs_round_number_per_client(
-        stat_metrics, sys_metrics, max_num_clients, figsize=(15, 12), max_name_len=10, **kwargs):
-    """Plots the clients' test accuracy vs. the round number.
+        stat_metrics, sys_metrics, max_num_clients, figsize=(10, 10), max_name_len=10, **kwargs):
+    """Plots the clients" test accuracy vs. the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
-        sys_metrics: pd.DataFrame as written by writer.py. Allows us to know which client actually performed training
-            in each round. If None, then no indication is given of when was each client trained.
+        sys_metrics: pd.DataFrame as written by writer.py. Allows us to know which client actually
+            performed training in each round. If None, then no indication is given of when was
+            each client trained.
         max_num_clients: Maximum number of clients to plot.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
-        max_name_len: Maximum length for a client's id.
+        title_fontsize: Font size for the plot"s title.
+        max_name_len: Maximum length for a client"s id.
         kwargs: Arguments to be passed to _set_plot_properties."""
     # Plot accuracies per client.
     clients = stat_metrics[CLIENT_ID_KEY].unique()[:max_num_clients]
-    cmap = plt.get_cmap('jet_r')
+    cmap = plt.get_cmap("jet_r")
     plt.figure(figsize=figsize)
 
     for i, c in enumerate(clients):
@@ -142,32 +148,38 @@ def plot_accuracy_vs_round_number_per_client(
         c_accuracies = stat_metrics.loc[stat_metrics[CLIENT_ID_KEY] == c]
         plt.plot(c_accuracies[NUM_ROUND_KEY], c_accuracies[ACCURACY_KEY], color=color)
 
-    plt.suptitle('Accuracy vs Round Number (Per Client)', fontsize=title_fontsize)
-    plt.title('(Dots indicate that client was trained at that round)')
-    plt.xlabel('Round Number', fontsize=label_fontsize)
-    plt.ylabel('Accuracy', fontsize=label_fontsize)
+    plt.suptitle("Accuracy vs Round Number (%s clients)" % max_num_clients,
+              fontsize=title_fontsize)
+    plt.title("Dots indicate that this client was trained at that round.",
+              fontsize=title_fontsize)
+    plt.xlabel("Round Number", fontsize=label_fontsize)
+    plt.ylabel("Accuracy", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 500))
+    plt.ylim((0, 1))
 
     labels = stat_metrics[[CLIENT_ID_KEY, NUM_SAMPLES_KEY]].drop_duplicates()
     labels = labels.loc[labels[CLIENT_ID_KEY].isin(clients)]
-    labels = ['%s, %d' % (row[CLIENT_ID_KEY][:max_name_len], row[NUM_SAMPLES_KEY])
+    labels = ["%s, %d" % (row[CLIENT_ID_KEY][:max_name_len], row[NUM_SAMPLES_KEY])
               for _, row in labels.iterrows()]
-    plt.legend(labels, title='client id, num_samples', loc='upper left')
+    plt.legend(labels, title="client id, num_samples",
+               loc="lower right", fontsize=legend_fontsize)
 
     # Plot moments in which the clients were actually used for training.
-    # To do this, we need the system metrics (to know which client actually performed training in each round).
+    # To do this, we need the system metrics (to know which client actually
+    # performed training in each round).
     if sys_metrics is not None:
         for i, c in enumerate(clients[:max_num_clients]):
             color = cmap(float(i) / len(clients))
             c_accuracies = stat_metrics.loc[stat_metrics[CLIENT_ID_KEY] == c]
             c_computation = sys_metrics.loc[sys_metrics[CLIENT_ID_KEY] == c]
-            c_join = pd.merge(c_accuracies, c_computation, on=NUM_ROUND_KEY, how='inner')
+            c_join = pd.merge(c_accuracies, c_computation, on=NUM_ROUND_KEY, how="inner")
             if not c_join.empty:
                 plt.plot(
                     c_join[NUM_ROUND_KEY],
                     c_join[ACCURACY_KEY],
-                    linestyle='None',
-                    marker='.',
+                    linestyle="None",
+                    marker=".",
                     color=color,
                     markersize=18)
 
@@ -183,21 +195,24 @@ def plot_bytes_written_and_read(
         sys_metrics: pd.DataFrame as written by writer.py.
         rolling_window: Number of previous rounds to consider in the cumulative sum.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
+        title_fontsize: Font size for the plot"s title.
         kwargs: Arguments to be passed to _set_plot_properties."""
 
     plt.figure(figsize=figsize)
 
     server_metrics = sys_metrics.groupby(NUM_ROUND_KEY, as_index=False).sum()
     rounds = server_metrics[NUM_ROUND_KEY]
-    server_metrics = server_metrics.rolling(rolling_window, on=NUM_ROUND_KEY, min_periods=1).sum()
-    plt.plot(rounds, server_metrics['bytes_written'], alpha=0.7)
-    plt.plot(rounds, server_metrics['bytes_read'], alpha=0.7)
+    server_metrics = server_metrics.rolling(
+        rolling_window, on=NUM_ROUND_KEY, min_periods=1).sum()
+    plt.plot(rounds, server_metrics["bytes_written"], alpha=0.7)
+    plt.plot(rounds, server_metrics["bytes_read"], alpha=0.7)
 
-    plt.title('Bytes Written and Read by Server vs. Round Number\n', fontsize=title_fontsize)
-    plt.xlabel('Round Number', fontsize=label_fontsize)
-    plt.ylabel('Bytes', fontsize=label_fontsize)
-    plt.legend(['Bytes Written', 'Bytes Read'], loc='upper left', fontsize=legend_fontsize)
+    plt.title("Bytes Pushed and Pulled by Clients vs Round Number\n",
+              fontsize=title_fontsize)
+    plt.xlabel("Round Number", fontsize=label_fontsize)
+    plt.ylabel("Bytes", fontsize=label_fontsize)
+    plt.legend(["Bytes Pushed", "Bytes Pulled"], loc="upper left",
+               fontsize=legend_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
     _set_plot_properties(kwargs)
     plt.show()
@@ -206,7 +221,7 @@ def plot_bytes_written_and_read(
 def plot_client_computations_vs_round_number(
         sys_metrics, aggregate_window=20, max_num_clients=20,
         figsize=(10, 8), max_name_len=10, range_rounds=None):
-    """Plots the clients' local computations against round number.
+    """Plots the clients" local computations against round number.
 
     Args:
         sys_metrics: pd.DataFrame as written by writer.py.
@@ -214,8 +229,8 @@ def plot_client_computations_vs_round_number(
             rounds 0-19, 20-39, etc. will be added together.
         max_num_clients: Maximum number of clients to plot.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
-        max_name_len: Maximum length for a client's id.
+        title_fontsize: Font size for the plot"s title.
+        max_name_len: Maximum length for a client"s id.
         range_rounds: Tuple representing the range of rounds to be plotted. The rounds
             are subsampled before aggregation. If None, all rounds are considered.
     """
@@ -258,7 +273,7 @@ def plot_client_computations_vs_round_number(
         agg_comp_matrix.append(agg_c_comp_vals)
 
     plt.title(
-        'Total Client Computations (FLOPs) vs. Round Number (x %d)' % aggregate_window,
+        "Total Client Computations (FLOPs) vs. Round Number (x %d)" % aggregate_window,
         fontsize=title_fontsize)
     im = plt.imshow(agg_comp_matrix)
     plt.yticks(range(len(matrix_keys)), matrix_keys)
@@ -296,4 +311,4 @@ def get_longest_flops_path(sys_metrics):
 
     comp_matrix = np.asarray(comp_matrix)
     num_flops = np.sum(np.max(comp_matrix, axis=0))
-    return '%.2E' % Decimal(num_flops.item())
+    return "%.2E" % Decimal(num_flops.item())
