@@ -1,5 +1,4 @@
-# FedMix: Mixed Frequency Federated Learning with Approximately I.I.D
-Sampling
+# FedMix: Mixed Frequency Federated Learning with Approximately I.I.D Sampling
 
 ## Note
 
@@ -109,17 +108,17 @@ logs from ``metrics/metrics_stat.csv`` and ``metrics/metrics_sys.csv``,
 and plot curves of accuracy, bytes pushed and pulled, and flops 
 of clients.
 
-<div align="center"><img src="images/acc_vs_round.png" width="600px" />
+<div align="center"><img src="metrics/acc_vs_round.png" width="600px" />
 </div>
 
-<div align="center"><img src="images/acc_vs_round_per_client.png" 
+<div align="center"><img src="metrics/acc_vs_round_per_client.png" 
 width="600px" />
 </div>
 
-<div align="center"><img src="images/comm_bytes.png" width="600px" />
+<div align="center"><img src="metrics/comm_bytes.png" width="600px" />
 </div>
 
-<div align="center"><img src="images/flops_vs_round.png" 
+<div align="center"><img src="metrics/flops_vs_round.png" 
 width="600px" />
 </div>
 
