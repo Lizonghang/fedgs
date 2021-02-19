@@ -43,7 +43,7 @@ def load_data(stat_metrics_file, sys_metrics_file):
 
 
 def _set_plot_properties(properties):
-    """Sets some plt properties."""
+    """Set plt properties."""
     if "xlim" in properties:
         plt.xlim(properties["xlim"])
     if "ylim" in properties:
@@ -57,7 +57,7 @@ def _set_plot_properties(properties):
 def plot_accuracy_vs_round_number(
         stat_metrics, use_set="Test", weighted=False,
         plot_stds=False, figsize=(6, 4.5),  **kwargs):
-    """Plots the clients' average accuracy vs. the round number.
+    """Plot the average accuracy vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -65,7 +65,6 @@ def plot_accuracy_vs_round_number(
             test samples.
         plot_stds: Whether to plot error bars corresponding to the std between users.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
         kwargs: Arguments to be passed to _set_plot_properties.
     """
     plt.figure(figsize=figsize)
@@ -114,7 +113,7 @@ def plot_accuracy_vs_round_number(
 def plot_loss_vs_round_number(
         stat_metrics, use_set="Test", weighted=False,
         plot_stds=False, figsize=(6, 4.5),  **kwargs):
-    """Plots the clients' average loss vs. the round number.
+    """Plots the average loss vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -122,7 +121,6 @@ def plot_loss_vs_round_number(
             test samples.
         plot_stds: Whether to plot error bars corresponding to the std between users.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
         kwargs: Arguments to be passed to _set_plot_properties.
     """
     plt.figure(figsize=figsize)
@@ -190,7 +188,7 @@ def _weighted_std(df, metric_name, weight_name):
 def plot_accuracy_vs_round_number_per_client(
         stat_metrics, sys_metrics, max_num_clients, use_set="Test",
         figsize=(10, 10), max_name_len=10, **kwargs):
-    """Plots the clients' accuracy vs. the round number.
+    """Plots the clients' accuracy vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -199,10 +197,9 @@ def plot_accuracy_vs_round_number_per_client(
             each client trained.
         max_num_clients: Maximum number of clients to plot.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
         max_name_len: Maximum length for a client's id.
-        kwargs: Arguments to be passed to _set_plot_properties."""
-    # Plot accuracies per client.
+        kwargs: Arguments to be passed to _set_plot_properties.
+    """
     clients = stat_metrics[CLIENT_ID_KEY].unique()[:max_num_clients]
     cmap = plt.get_cmap("jet_r")
     plt.figure(figsize=figsize)
@@ -255,7 +252,7 @@ def plot_accuracy_vs_round_number_per_client(
 def plot_loss_vs_round_number_per_client(
         stat_metrics, sys_metrics, max_num_clients, use_set="Test",
         figsize=(10, 10), max_name_len=10, **kwargs):
-    """Plots the clients' accuracy vs. the round number.
+    """Plots the clients' loss vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -264,10 +261,9 @@ def plot_loss_vs_round_number_per_client(
             each client trained.
         max_num_clients: Maximum number of clients to plot.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot's title.
         max_name_len: Maximum length for a client's id.
-        kwargs: Arguments to be passed to _set_plot_properties."""
-    # Plot accuracies per client.
+        kwargs: Arguments to be passed to _set_plot_properties.
+    """
     clients = stat_metrics[CLIENT_ID_KEY].unique()[:max_num_clients]
     cmap = plt.get_cmap("jet_r")
     plt.figure(figsize=figsize)
@@ -319,15 +315,14 @@ def plot_loss_vs_round_number_per_client(
 
 def plot_bytes_written_and_read(
         sys_metrics, rolling_window=10, figsize=(6, 4.5), **kwargs):
-    """Plots the cumulative sum of the bytes written and read by the server.
+    """Plots the cumulative sum of the bytes pushed and pulled by all clients.
 
     Args:
         sys_metrics: pd.DataFrame as written by writer.py.
         rolling_window: Number of previous rounds to consider in the cumulative sum.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot"s title.
-        kwargs: Arguments to be passed to _set_plot_properties."""
-
+        kwargs: Arguments to be passed to _set_plot_properties.
+    """
     plt.figure(figsize=figsize)
 
     server_metrics = sys_metrics.groupby(NUM_ROUND_KEY, as_index=False).sum()
@@ -361,7 +356,6 @@ def plot_client_computations_vs_round_number(
             rounds 0-19, 20-39, etc. will be added together.
         max_num_clients: Maximum number of clients to plot.
         figsize: Size of the plot as specified by plt.figure().
-        title_fontsize: Font size for the plot"s title.
         max_name_len: Maximum length for a client"s id.
         range_rounds: Tuple representing the range of rounds to be plotted. The rounds
             are subsampled before aggregation. If None, all rounds are considered.
@@ -416,16 +410,13 @@ def plot_client_computations_vs_round_number(
 
 def get_longest_flops_path(sys_metrics):
     """Prints the largest amount of flops required to complete training.
-
     To calculate this metric, we:
         1. For each round, pick the client that required the largest amount
             of local training.
         2. Sum the FLOPS from the clients picked in step 1 across rounds.
-
-    TODO: This metric would make more sense with seconds instead of FLOPS.
-
     Args:
-        sys_metrics: pd.DataFrame as written by writer.py."""
+        sys_metrics: pd.DataFrame as written by writer.py.
+    """
     num_rounds = sys_metrics[NUM_ROUND_KEY].max()
     clients = sys_metrics[CLIENT_ID_KEY].unique()
 
