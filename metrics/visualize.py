@@ -2,6 +2,7 @@ import visualization_utils
 
 SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy
 PLOT_CLIENTS = True
+PLOT_SET = "Train"  # "Test" or "Train"
 stat_file = "metrics_stat.csv"  # change to None if desired
 sys_file = "metrics_sys.csv"  # change to None if desired
 
@@ -10,10 +11,20 @@ def plot_acc_vs_round(stat_metrics, sys_metrics):
     """Plots accuracy vs. round number."""
     if stat_metrics is not None:
         visualization_utils.plot_accuracy_vs_round_number(
-            stat_metrics, weighted=SHOW_WEIGHTED, plot_stds=False)
+            stat_metrics, use_set=PLOT_SET, weighted=SHOW_WEIGHTED, plot_stds=False)
     if PLOT_CLIENTS and stat_metrics is not None:
         visualization_utils.plot_accuracy_vs_round_number_per_client(
-            stat_metrics, sys_metrics, max_num_clients=5)
+            stat_metrics, sys_metrics, max_num_clients=10, use_set=PLOT_SET)
+
+
+def plot_loss_vs_round(stat_metrics, sys_metrics):
+    """Plots loss vs. round number."""
+    if stat_metrics is not None:
+        visualization_utils.plot_loss_vs_round_number(
+            stat_metrics, use_set=PLOT_SET, weighted=SHOW_WEIGHTED, plot_stds=False)
+    if PLOT_CLIENTS and stat_metrics is not None:
+        visualization_utils.plot_loss_vs_round_number_per_client(
+            stat_metrics, sys_metrics, max_num_clients=10, use_set=PLOT_SET)
 
 
 def plot_bytes_vs_round(stat_metrics, sys_metrics):
@@ -37,7 +48,8 @@ def calc_longest_flops(stat_metrics, sys_metrics):
 
 if __name__ == "__main__":
     metrics = visualization_utils.load_data(stat_file, sys_file)
-    # plot_acc_vs_round(*metrics)
+    plot_acc_vs_round(*metrics)
+    # plot_loss_vs_round(*metrics)
     # plot_bytes_vs_round(*metrics)
     # plot_comp_vs_round(*metrics)
-    calc_longest_flops(*metrics)
+    # calc_longest_flops(*metrics)

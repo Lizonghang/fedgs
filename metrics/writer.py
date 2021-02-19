@@ -68,7 +68,7 @@ def print_metrics(round_number,
         client_data.loc[len(client_data)] = current_client
 
     mode = "a"
-    if ("stat" in metrics_name and round_number == 0) \
+    if ("stat" in metrics_name and round_number == 0 and partition == "train") \
             or ("sys" in metrics_name and round_number == 1):
         mode = "w"
 
