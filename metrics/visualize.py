@@ -37,7 +37,7 @@ def calc_longest_flops(stat_metrics, sys_metrics):
 
 if __name__ == "__main__":
     metrics = visualization_utils.load_data(stat_file, sys_file)
-    # plot_acc_vs_round(*metrics)
+    plot_acc_vs_round(*metrics)
     # plot_bytes_vs_round(*metrics)
     # plot_comp_vs_round(*metrics)
-    calc_longest_flops(*metrics)
+    # calc_longest_flops(*metrics)
