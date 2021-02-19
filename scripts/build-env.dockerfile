@@ -51,7 +51,8 @@ RUN conda install -y python=3.7 && \
 # ------------------------------------------------------------------
 RUN pip install --index-url https://pypi.org/simple/ mxop && \
     pip uninstall -y mxnet==1.7.0.post2 && \
-    pip install mxnet-cu101mkl==1.4.1 && \
+    pip install mxnet-cu101mkl==1.4.1 \
+                matplotlib && \
     conda install -y numpy==1.14.6 \
                      pandas==1.0.3
 
