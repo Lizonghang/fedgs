@@ -22,7 +22,7 @@ def plot_bytes_vs_round(stat_metrics, sys_metrics):
     """
     if stat_metrics is not None:
         visualization_utils.plot_bytes_written_and_read(
-            sys_metrics, rolling_window=1)
+            sys_metrics, rolling_window=500)
 
 
 def plot_comp_vs_round(stat_metrics, sys_metrics):
@@ -37,7 +37,7 @@ def calc_longest_flops(stat_metrics, sys_metrics):
 
 if __name__ == "__main__":
     metrics = visualization_utils.load_data(stat_file, sys_file)
-    plot_acc_vs_round(*metrics)
+    # plot_acc_vs_round(*metrics)
     # plot_bytes_vs_round(*metrics)
     # plot_comp_vs_round(*metrics)
-    # calc_longest_flops(*metrics)
+    calc_longest_flops(*metrics)

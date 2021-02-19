@@ -214,6 +214,8 @@ def plot_bytes_written_and_read(
     plt.legend(["Bytes Pushed", "Bytes Pulled"], loc="upper left",
                fontsize=legend_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 500))
+    plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 

@@ -119,7 +119,7 @@ width="600px" />
 </div>
 
 <div align="center"><img src="metrics/flops_vs_round.png" 
-width="600px" />
+width="1000px" />
 </div>
 
-Longest FLOPs path: 4.78E+12
+Longest FLOPs path: 4.29E+12
