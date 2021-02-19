@@ -192,7 +192,7 @@ class MiddleServer(Server):
                    LOCAL_COMPUTATIONS_KEY: 0}
             for c in clients}
 
-        for s in range(num_syncs):
+        for _ in range(num_syncs):
             for c in clients:
                 c.set_model(self.model)
                 comp, num_samples, update = c.train()

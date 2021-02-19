@@ -256,7 +256,8 @@ def plot_client_computations_vs_round_number(
     if range_rounds:
         assert range_rounds[0] >= 0 and range_rounds[1] > 0
         assert range_rounds[0] <= range_rounds[1]
-        assert range_rounds[0] < len(comp_matrix[0]) and range_rounds[1] < len(comp_matrix[0]) + 1
+        assert range_rounds[0] < len(comp_matrix[0]) \
+               and range_rounds[1] < len(comp_matrix[0]) + 1
         assert range_rounds[1] - range_rounds[0] >= aggregate_window
         new_comp_matrix = []
         for i in range(len(comp_matrix)):
