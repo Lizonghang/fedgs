@@ -108,16 +108,20 @@ logs from ``metrics/metrics_stat.csv`` and ``metrics/metrics_sys.csv``,
 and plot curves of accuracy, bytes pushed and pulled, and flops 
 of clients.
 
-<img src="metrics/train_acc_vs_round.png" width="400px" /><img src="metrics/test_acc_vs_round.png" width="400px" />
+<img src="metrics/train_acc_vs_round.png" width="400px" />
+<img src="metrics/test_acc_vs_round.png" width="400px" />
 
-<img src="metrics/train_loss_vs_round.png" width="400px" /><img src="metrics/test_loss_vs_round.png" width="400px" />
+<img src="metrics/train_loss_vs_round.png" width="400px" />
+<img src="metrics/test_loss_vs_round.png" width="400px" />
 
-<img src="metrics/train_acc_vs_round_per_client.png" width="400px" /><img src="metrics/test_acc_vs_round_per_client.png" width="400px" />
+<img src="metrics/train_acc_vs_round_per_client.png" width="400px" />
+<img src="metrics/test_acc_vs_round_per_client.png" width="400px" />
 
-<img src="metrics/train_loss_vs_round_per_client.png" width="400px" /><img src="metrics/test_loss_vs_round_per_client.png" width="400px" />
+<img src="metrics/train_loss_vs_round_per_client.png" width="400px" />
+<img src="metrics/test_loss_vs_round_per_client.png" width="400px" />
 
-<div align="center"><img src="metrics/comm_bytes.png" width="600px" />
+<div align="center"><img src="metrics/comm_bytes.png" width="400px" />
 
-<div align="center"><img src="metrics/flops_vs_round.png" width="1000px" />
+<div align="center"><img src="metrics/flops_vs_round.png" width="800px" />
 
 Longest FLOPs path: 4.29E+12
