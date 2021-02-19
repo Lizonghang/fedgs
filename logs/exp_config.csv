@@ -1,0 +1,4 @@
+exp_id, dataset,    model,  num_rounds, num_groups, clients_per_group,  clients_per_round,  batch_size, lr,     num_syncs,  test_acc,   test_loss
+0,      femnist,    cnn,    500,        10,         10,                 100,                5,          0.01,   50,         0.859068,   0.421488
+1,      femnist,    cnn,    500,        10,         10,                 100,                5,          0.01,   30,         0.847626,   0.461615
+2,      femnist,    cnn,    500,        10,         10,                 100,                5,          0.01,   10,         0.793483,   0.692365
