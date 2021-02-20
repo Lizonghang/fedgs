@@ -8,6 +8,7 @@ import numpy as np
 import os
 import pandas as pd
 import sys
+from mxnet import nd
 
 from decimal import Decimal
 
@@ -113,7 +114,7 @@ def plot_accuracy_vs_round_number(
 def plot_loss_vs_round_number(
         stat_metrics, use_set="Test", weighted=False,
         plot_stds=False, figsize=(6, 4.5),  **kwargs):
-    """Plots the average loss vs the round number.
+    """Plot the average loss vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -188,7 +189,7 @@ def _weighted_std(df, metric_name, weight_name):
 def plot_accuracy_vs_round_number_per_client(
         stat_metrics, sys_metrics, max_num_clients, use_set="Test",
         figsize=(10, 10), max_name_len=10, **kwargs):
-    """Plots the clients' accuracy vs the round number.
+    """Plot the clients' accuracy vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -252,7 +253,7 @@ def plot_accuracy_vs_round_number_per_client(
 def plot_loss_vs_round_number_per_client(
         stat_metrics, sys_metrics, max_num_clients, use_set="Test",
         figsize=(10, 10), max_name_len=10, **kwargs):
-    """Plots the clients' loss vs the round number.
+    """Plot the clients' loss vs the round number.
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
@@ -315,7 +316,7 @@ def plot_loss_vs_round_number_per_client(
 
 def plot_bytes_written_and_read(
         sys_metrics, rolling_window=10, figsize=(6, 4.5), **kwargs):
-    """Plots the cumulative sum of the bytes pushed and pulled by all clients.
+    """Plot the cumulative sum of the bytes pushed and pulled by all clients.
 
     Args:
         sys_metrics: pd.DataFrame as written by writer.py.
@@ -348,7 +349,7 @@ def plot_bytes_written_and_read(
 def plot_client_computations_vs_round_number(
         sys_metrics, aggregate_window=20, max_num_clients=20,
         figsize=(10, 8), max_name_len=10, range_rounds=None):
-    """Plots the clients' local computations against round number.
+    """Plot the clients' local computations against round number.
 
     Args:
         sys_metrics: pd.DataFrame as written by writer.py.
@@ -409,7 +410,7 @@ def plot_client_computations_vs_round_number(
 
 
 def get_longest_flops_path(sys_metrics):
-    """Prints the largest amount of flops required to complete training.
+    """Print the largest amount of flops required to complete training.
     To calculate this metric, we:
         1. For each round, pick the client that required the largest amount
             of local training.
@@ -436,3 +437,67 @@ def get_longest_flops_path(sys_metrics):
     comp_matrix = np.asarray(comp_matrix)
     num_flops = np.sum(np.max(comp_matrix, axis=0))
     return "%.2E" % Decimal(num_flops.item())
+
+
+def plot_clients_dist(clients=None,
+                      global_dist=None,
+                      global_train_dist=None,
+                      global_test_dist=None,
+                      metrics_dir="metrics"):
+    """Plot data distribution of given clients.
+    Args:
+        clients: List of Client objects.
+        global_dist: List of num samples for each class.
+        global_train_dist: List of num samples for each class in train set.
+        global_test_dist: List of num samples for each class in test set.
+    """
+    plt.figure()
+    plt.title("Data Distribution (%s Clients)" % len(clients),
+              fontsize=title_fontsize)
+    plt.xlabel("Class", fontsize=label_fontsize)
+    plt.ylabel("Proportion", fontsize=label_fontsize)
+    plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 61))
+
+    # plot clients' data distribution if given
+    if clients is not None:
+        num_classes = len(clients[0].train_sample_dist)
+        class_list = range(num_classes)
+        c_ids = []
+        for c in clients:
+            c_ids.append(c.id)
+            c_train_dist_ = c.train_sample_dist
+            c_train_dist_ = c_train_dist_ / c_train_dist_.sum()
+            plt.plot(class_list, c_train_dist_, linestyle=":", linewidth=1)
+
+    # plot the distribution of global train data
+    p1 = None
+    if global_train_dist is not None:
+        num_classes = len(global_train_dist)
+        class_list = range(num_classes)
+        g_train_dist_ = global_train_dist / global_train_dist.sum()
+        p1, = plt.plot(class_list, g_train_dist_, linestyle="--", linewidth=2)
+
+    # plot the distribution of global test data
+    p2 = None
+    if global_test_dist is not None:
+        num_classes = len(global_test_dist)
+        class_list = range(num_classes)
+        g_test_dist_ = global_test_dist / global_test_dist.sum()
+        p2, = plt.plot(class_list, g_test_dist_, linestyle="--", linewidth=2)
+
+    # plot the distribution of global data
+    p3 = None
+    if global_dist is not None:
+        num_classes = len(global_dist)
+        class_list = range(num_classes)
+        g_dist_ = global_dist / global_dist.sum()
+        p3, = plt.plot(class_list, g_dist_, linestyle="-", linewidth=2, c="k")
+
+    l = [[], []]
+    if p1: l[0].append(p1); l[1].append("global train dist");
+    if p2: l[0].append(p2); l[1].append("global test dist");
+    if p3: l[0].append(p3); l[1].append("global dist");
+
+    plt.legend(*l, fontsize=10)
+    plt.savefig(os.path.join(metrics_dir, "dist.png"))

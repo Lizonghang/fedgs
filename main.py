@@ -82,7 +82,7 @@ def main():
 
     # Measure the global data distribution
     _, _, global_test_dist = get_clients_dist(
-        clients, max_num_clients=20, display=True, metrics_dir=args.metrics_dir)
+        clients, display=True, max_num_clients=20, metrics_dir=args.metrics_dir)
 
     # Create middle servers
     middle_servers = setup_middle_servers(
@@ -200,13 +200,13 @@ def get_clients_info(clients):
     return ids, groups, num_samples
 
 
-def get_clients_dist(clients, max_num_clients=20, display=False, metrics_dir=None):
+def get_clients_dist(
+        clients, display=False, max_num_clients=20, metrics_dir="metrics"):
     """Return the global data distribution of all clients.
     Args:
         clients: List of Client objects.
-        max_num_clients: Maximum number of clients to plot.
         display: Visualize data distribution when set to True.
-        metrics_dir: Path to save the figure.
+        max_num_clients: Maximum number of clients to plot.
     Returns:
         global_dist: List of num samples for each class.
         global_train_dist: List of num samples for each class in train set.
@@ -219,49 +219,15 @@ def get_clients_dist(clients, max_num_clients=20, display=False, metrics_dir=Non
     if display:
 
         try:
-            import matplotlib.pyplot as plt
-            from metrics.visualization_utils import (
-                title_fontsize, legend_fontsize,
-                label_fontsize, tick_fontsize)
-
-            plt.figure()
-            plt.title("Global Data Distribution (%s Clients)" % max_num_clients,
-                      fontsize=title_fontsize)
-            plt.xlabel("Class", fontsize=label_fontsize)
-            plt.ylabel("Proportion", fontsize=label_fontsize)
-            plt.tick_params(labelsize=tick_fontsize)
-            plt.xlim((0, 61))
-
-            num_classes = len(global_dist)
-            class_list = range(num_classes)
+            from metrics.visualization_utils import plot_clients_dist
 
             np.random.seed(0)
             rand_clients = np.random.choice(clients, max_num_clients)
-
-            c_ids = []
-            for c in rand_clients:
-                c_ids.append(c.id)
-                c_train_dist_ = c.train_sample_dist
-                c_train_dist_ = c_train_dist_ / c_train_dist_.sum()
-                plt.plot(class_list,
-                         c_train_dist_,
-                         linestyle=":", linewidth=1)
-
-            p1, = plt.plot(class_list,
-                           global_train_dist / global_train_dist.sum(),
-                           linestyle="--", linewidth=2)
-            p2, = plt.plot(class_list,
-                           global_test_dist / global_test_dist.sum(),
-                           linestyle="--", linewidth=2)
-            p3, = plt.plot(class_list,
-                           global_dist / global_dist.sum(),
-                           linestyle="-", linewidth=2, c="k")
-
-            plt.legend(
-                (p1, p2, p3),
-                ("global train dist", "global test dist", "global dist"),
-                fontsize=10)
-            plt.savefig(os.path.join(metrics_dir, "dist.png"))
+            plot_clients_dist(rand_clients,
+                              global_dist,
+                              global_train_dist,
+                              global_test_dist,
+                              metrics_dir)
 
         except ModuleNotFoundError:
             pass
