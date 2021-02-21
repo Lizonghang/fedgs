@@ -22,7 +22,8 @@ class Server(ABC):
                 random sampling.
             clients_per_group: Number of clients to select in
                 each group.
-            sample: Sample method, either "random" or "approx_iid".
+            sample: Sample method, could be "random", "approx_iid", and
+                "brute".
             base_dist: Real data distribution, usually global_test_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
@@ -100,7 +101,7 @@ class TopServer(Server):
     def select_clients(self, my_round, clients_per_group, sample="random",
                        base_dist=None, display=False, metrics_dir="metrics"):
         """Call middle servers to select clients."""
-        assert sample in ["random", "approx_iid"]
+        assert sample in ["random", "approx_iid", "brute"]
 
         selected_info = []
         self.selected_clients = []
@@ -187,28 +188,30 @@ class MiddleServer(Server):
         num_clients = len(online_clients)
         num_sample_clients = min(clients_per_group, num_clients)
         num_rand_clients = num_sample_clients // 2
-        num_best_clients = num_sample_clients - num_rand_clients
+        num_sample_clients = num_sample_clients - num_rand_clients
 
         # Randomly select half of num_clients clients
         np.random.seed(my_round)
         rand_clients_idx = np.random.choice(
             range(num_clients), num_rand_clients, replace=False)
-        rand_clients = np.take(online_clients, rand_clients_idx)
+        rand_clients = np.take(online_clients, rand_clients_idx).tolist()
 
         # Select rest clients to meet approximate i.i.d. dist
-        rest_clients = np.delete(online_clients, rand_clients_idx)
+        rest_clients = np.delete(online_clients, rand_clients_idx).tolist()
         if sample == "random":
-            best_clients = self.random_sampling(
-                rest_clients, num_best_clients, my_round)
+            sample_clients = self.random_sampling(
+                rest_clients, num_sample_clients, my_round)
         elif sample == "approx_iid":
-            best_clients = self.approximate_iid_sampling(
-                rest_clients, num_best_clients, base_dist)
+            sample_clients = self.approximate_iid_sampling(
+                rest_clients, num_sample_clients, base_dist, rand_clients)
+        elif sample == "brute":
+            sample_clients = self.brute_sampling(
+                rest_clients, num_sample_clients, base_dist, rand_clients)
 
-        self.selected_clients = np.concatenate([rand_clients, best_clients])
+        self.selected_clients = rand_clients + sample_clients
 
         # Measure the distance of base distribution and mean distribution
-        distance = self.get_dist_distance(
-            self.selected_clients, base_dist, use_distance="wasserstein")
+        distance = self.get_dist_distance(self.selected_clients, base_dist)
         print("Dist Distance on Middle Server %i:" % self.server_id, distance)
 
         # Visualize distributions if needed
@@ -234,19 +237,55 @@ class MiddleServer(Server):
             rand_clients: List of randomly sampled clients.
         """
         np.random.seed(my_round)
-        return np.random.choice(clients, num_clients, replace=False)
+        rand_clients = np.random.choice(clients, num_clients, replace=False)
+        return rand_clients.tolist()
 
-    def approximate_iid_sampling(self, clients, num_clients, base_dist):
+    def approximate_iid_sampling(self, clients, num_clients, base_dist, exist_clients):
         """TODO(Yihong): Implement approximate i.i.d. sampling algorithm.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
             base_dist: Real data distribution, usually global_test_dist.
+            exist_clients: List of existing clients.
+        Returns:
+            approx_clients: List of sampled clients, which makes
+                self.selected_clients approximate to i.i.d. distribution.
+        """
+        return clients[:num_clients]
+
+    def brute_sampling(self, clients, num_clients, base_dist, exist_clients):
+        """
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            base_dist: Real data distribution, usually global_test_dist.
+            exist_clients: List of existing clients.
         Returns:
             best_clients: List of sampled clients, which makes
-                self.selected_clients satisfy i.i.d. distribution.
+                self.selected_clients most satisfying i.i.d. distribution.
         """
-        return np.array([])
+        best_clients_ = []
+        min_distance_ = [np.inf]
+        clients_tmp_ = []
+
+        def recursive_combine(
+                clients_, start, num_clients_, best_clients_, min_distance_):
+            if num_clients_ == 0:
+                all_clients_ = exist_clients + clients_tmp_
+                distance_ = self.get_dist_distance(all_clients_, base_dist)
+                if distance_ < min_distance_[0]:
+                    best_clients_[:] = clients_tmp_
+                    min_distance_[0] = distance_
+            elif num_clients_ > 0:
+                for i in range(start, len(clients_)-num_clients_+1):
+                    clients_tmp_.append(clients_[i])
+                    recursive_combine(
+                        clients_, i+1, num_clients_-1, best_clients_, min_distance_)
+                    clients_tmp_.remove(clients_[i])
+
+        recursive_combine(clients, 0, num_clients, best_clients_, min_distance_)
+
+        return best_clients_
 
     def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
         """Return distance of the base distribution and the mean distribution.
@@ -259,8 +298,8 @@ class MiddleServer(Server):
             distance: The L1 distance of the base distribution and the mean
                 distribution.
         """
-        c_mean_dist_ = sum([c.train_sample_dist for c in clients])
-        c_mean_dist_ = c_mean_dist_ / c_mean_dist_.sum()
+        c_sum_samples_ = sum([c.train_sample_dist for c in clients])
+        c_mean_dist_ = c_sum_samples_ / c_sum_samples_.sum()
         base_dist_ = base_dist / base_dist.sum()
 
         distance = np.inf
