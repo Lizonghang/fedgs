@@ -199,7 +199,7 @@ class MiddleServer(Server):
         rest_clients = np.delete(online_clients, rand_clients_idx)
         if sample == "random":
             best_clients = self.random_sampling(
-                rest_clients, num_best_clients)
+                rest_clients, num_best_clients, my_round)
         elif sample == "approx_iid":
             best_clients = self.approximate_iid_sampling(
                 rest_clients, num_best_clients, base_dist)
@@ -224,14 +224,16 @@ class MiddleServer(Server):
                 for c in self.selected_clients]
         return self.selected_clients, info
 
-    def random_sampling(self, clients, num_clients):
+    def random_sampling(self, clients, num_clients, my_round):
         """Randomly sample num_clients clients from given clients.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
+            my_round: The current training round, used as random seed.
         Returns:
             rand_clients: List of randomly sampled clients.
         """
+        np.random.seed(my_round)
         return np.random.choice(clients, num_clients, replace=False)
 
     def approximate_iid_sampling(self, clients, num_clients, base_dist):
