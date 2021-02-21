@@ -254,7 +254,7 @@ class MiddleServer(Server):
         return clients[:num_clients]
 
     def brute_sampling(self, clients, num_clients, base_dist, exist_clients):
-        """
+        """Brute search all possible combinations to find best clients.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
