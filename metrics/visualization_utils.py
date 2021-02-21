@@ -443,6 +443,7 @@ def plot_clients_dist(clients=None,
                       global_dist=None,
                       global_train_dist=None,
                       global_test_dist=None,
+                      draw_mean=False,
                       metrics_dir="metrics"):
     """Plot data distribution of given clients.
     Args:
@@ -470,13 +471,23 @@ def plot_clients_dist(clients=None,
             c_train_dist_ = c_train_dist_ / c_train_dist_.sum()
             plt.plot(class_list, c_train_dist_, linestyle=":", linewidth=1)
 
+    p0 = None
+    if draw_mean and clients is not None:
+        num_classes = len(clients[0].train_sample_dist)
+        class_list = range(num_classes)
+        c_mean_dist_ = sum([c.train_sample_dist for c in clients])
+        c_mean_dist_ = c_mean_dist_ / c_mean_dist_.sum()
+        p0, = plt.plot(
+            class_list, c_mean_dist_, linestyle="--", linewidth=2, c="g")
+
     # plot the distribution of global train data
     p1 = None
     if global_train_dist is not None:
         num_classes = len(global_train_dist)
         class_list = range(num_classes)
         g_train_dist_ = global_train_dist / global_train_dist.sum()
-        p1, = plt.plot(class_list, g_train_dist_, linestyle="--", linewidth=2)
+        p1, = plt.plot(
+            class_list, g_train_dist_, linestyle="--", linewidth=2, c="b")
 
     # plot the distribution of global test data
     p2 = None
@@ -484,7 +495,8 @@ def plot_clients_dist(clients=None,
         num_classes = len(global_test_dist)
         class_list = range(num_classes)
         g_test_dist_ = global_test_dist / global_test_dist.sum()
-        p2, = plt.plot(class_list, g_test_dist_, linestyle="--", linewidth=2)
+        p2, = plt.plot(
+            class_list, g_test_dist_, linestyle="--", linewidth=2, c="orange")
 
     # plot the distribution of global data
     p3 = None
@@ -492,9 +504,11 @@ def plot_clients_dist(clients=None,
         num_classes = len(global_dist)
         class_list = range(num_classes)
         g_dist_ = global_dist / global_dist.sum()
-        p3, = plt.plot(class_list, g_dist_, linestyle="-", linewidth=2, c="k")
+        p3, = plt.plot(
+            class_list, g_dist_, linestyle="-", linewidth=2, c="k")
 
     l = [[], []]
+    if p0: l[0].append(p0); l[1].append("%s clients' mean dist" % len(clients));
     if p1: l[0].append(p1); l[1].append("global train dist");
     if p2: l[0].append(p2); l[1].append("global test dist");
     if p3: l[0].append(p3); l[1].append("global dist");
