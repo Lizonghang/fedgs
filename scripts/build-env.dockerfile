@@ -54,7 +54,7 @@ RUN pip install --index-url https://pypi.org/simple/ mxop && \
     pip install mxnet-cu101mkl==1.4.1 \
                 matplotlib && \
     conda install -y numpy==1.14.6 \
-                     pandas==1.0.3 \
-                     scipy==1.1.0
+                     pandas \
+                     scipy
 
 WORKDIR /root

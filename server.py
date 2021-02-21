@@ -111,7 +111,6 @@ class TopServer(Server):
             clients, info = _
             self.selected_clients.extend(clients)
             selected_info.extend(info)
-            break
 
         return selected_info
 
@@ -208,7 +207,8 @@ class MiddleServer(Server):
         self.selected_clients = np.concatenate([rand_clients, best_clients])
 
         # Measure the distance of base distribution and mean distribution
-        distance = self.get_dist_distance(self.selected_clients, base_dist)
+        distance = self.get_dist_distance(
+            self.selected_clients, base_dist, use_distance="wasserstein")
         print("Dist Distance on Middle Server %i:" % self.server_id, distance)
 
         # Visualize distributions if needed
@@ -269,9 +269,9 @@ class MiddleServer(Server):
             dist_diff_ = c_mean_dist_ - base_dist_
             distance = np.linalg.norm(dist_diff_, ord=2)
         elif use_distance == "cosine":
-            mean_dist_norm_ = np.linalg.norm(c_mean_dist_)
-            base_dist_norm_ = np.linalg.norm(base_dist_)
-            distance = c_mean_dist_.dot(base_dist_) / (mean_dist_norm_ * base_dist_norm_)
+            # The cosine distance between vectors u and v is defined as:
+            #       1 - dot(u, v) / (norm(u, ord=2) * norm(v, ord=2))
+            distance = scipy.spatial.distance.cosine(c_mean_dist_, base_dist_)
         elif use_distance == "js":
             distance = scipy.spatial.distance.jensenshannon(c_mean_dist_, base_dist_)
         elif use_distance == "wasserstein":
