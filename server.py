@@ -237,8 +237,8 @@ class MiddleServer(Server):
             rand_clients: List of randomly sampled clients.
         """
         np.random.seed(my_round)
-        rand_clients = np.random.choice(clients, num_clients, replace=False)
-        return rand_clients.tolist()
+        rand_clients_ = np.random.choice(clients, num_clients, replace=False)
+        return rand_clients_.tolist()
 
     def approximate_iid_sampling(self, clients, num_clients, base_dist, exist_clients):
         """TODO(Yihong): Implement approximate i.i.d. sampling algorithm.
@@ -251,7 +251,8 @@ class MiddleServer(Server):
             approx_clients: List of sampled clients, which makes
                 self.selected_clients approximate to i.i.d. distribution.
         """
-        return clients[:num_clients]
+        approx_clients_ = clients[:num_clients]
+        return approx_clients_
 
     def brute_sampling(self, clients, num_clients, base_dist, exist_clients):
         """Brute search all possible combinations to find best clients.
