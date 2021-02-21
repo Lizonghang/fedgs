@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import scipy
 import numpy as np
 
 from baseline_constants import BYTES_WRITTEN_KEY, \
@@ -13,13 +14,18 @@ class Server(ABC):
         self.total_weight = 0
 
     @abstractmethod
-    def select_clients(self, my_round, clients_per_group):
+    def select_clients(
+            self, my_round, clients_per_group, sample, base_dist, display, metrics_dir):
         """Select clients_per_group clients from each group.
         Args:
             my_round: The current training round, used for
                 random sampling.
             clients_per_group: Number of clients to select in
                 each group.
+            sample: Sample method, either "random" or "approx_iid".
+            base_dist: Real data distribution, usually global_test_dist.
+            display: Visualize data distribution when set to True.
+            metrics_dir: Directory to save metrics files.
         Returns:
             selected_clients: List of clients being selected.
             client_info: List of (num_train_samples, num_test_samples)
@@ -91,16 +97,21 @@ class TopServer(Server):
 
         self.middle_servers.extend(servers)
 
-    def select_clients(self, my_round, clients_per_group):
+    def select_clients(self, my_round, clients_per_group, sample="random",
+                       base_dist=None, display=False, metrics_dir="metrics"):
         """Call middle servers to select clients."""
+        assert sample in ["random", "approx_iid"]
+
         selected_info = []
         self.selected_clients = []
 
         for s in self.middle_servers:
-            _ = s.select_clients(my_round, clients_per_group)
+            _ = s.select_clients(
+                my_round, clients_per_group, sample, base_dist, display, metrics_dir)
             clients, info = _
             self.selected_clients.extend(clients)
             selected_info.extend(info)
+            break
 
         return selected_info
 
@@ -170,17 +181,103 @@ class MiddleServer(Server):
 
         self.clients.extend(clients)
 
-    def select_clients(self, my_round, clients_per_group):
-        """Randomly select clients_per_group clients for this round.
-        TODO(Yihong): Add approximate i.i.d. selection algorithm.
-        """
-        num_clients = min(clients_per_group, len(self.clients))
+    def select_clients(self, my_round, clients_per_group, sample="random",
+                       base_dist=None, display=False, metrics_dir="metrics"):
+        """Randomly select clients_per_group clients for this round."""
+        online_clients = self.online(self.clients)
+        num_clients = len(online_clients)
+        num_sample_clients = min(clients_per_group, num_clients)
+        num_rand_clients = num_sample_clients // 2
+        num_best_clients = num_sample_clients - num_rand_clients
+
+        # Randomly select half of num_clients clients
         np.random.seed(my_round)
-        self.selected_clients = np.random.choice(
-            self.online(self.clients), num_clients, replace=False)
+        rand_clients_idx = np.random.choice(
+            range(num_clients), num_rand_clients, replace=False)
+        rand_clients = np.take(online_clients, rand_clients_idx)
+
+        # Select rest clients to meet approximate i.i.d. dist
+        rest_clients = np.delete(online_clients, rand_clients_idx)
+        if sample == "random":
+            best_clients = self.random_sampling(
+                rest_clients, num_best_clients)
+        elif sample == "approx_iid":
+            best_clients = self.approximate_iid_sampling(
+                rest_clients, num_best_clients, base_dist)
+
+        self.selected_clients = np.concatenate([rand_clients, best_clients])
+
+        # Measure the distance of base distribution and mean distribution
+        distance = self.get_dist_distance(self.selected_clients, base_dist)
+        print("Dist Distance on Middle Server %i:" % self.server_id, distance)
+
+        # Visualize distributions if needed
+        if display:
+            from metrics.visualization_utils import plot_clients_dist
+
+            plot_clients_dist(clients=self.selected_clients,
+                              global_test_dist=base_dist,
+                              draw_mean=True,
+                              metrics_dir=metrics_dir)
+
         info = [(c.num_train_samples, c.num_test_samples)
                 for c in self.selected_clients]
         return self.selected_clients, info
+
+    def random_sampling(self, clients, num_clients):
+        """Randomly sample num_clients clients from given clients.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+        Returns:
+            rand_clients: List of randomly sampled clients.
+        """
+        return np.random.choice(clients, num_clients, replace=False)
+
+    def approximate_iid_sampling(self, clients, num_clients, base_dist):
+        """TODO(Yihong): Implement approximate i.i.d. sampling algorithm.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            base_dist: Real data distribution, usually global_test_dist.
+        Returns:
+            best_clients: List of sampled clients, which makes
+                self.selected_clients satisfy i.i.d. distribution.
+        """
+        return np.array([])
+
+    def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
+        """Return distance of the base distribution and the mean distribution.
+        Args:
+            clients: List of sampled clients.
+            base_dist: Real data distribution, usually global_test_dist.
+            use_distance: Distance metric to be used, could be:
+                ["l1", "l2", "cosine", "js", "wasserstein"].
+        Returns:
+            distance: The L1 distance of the base distribution and the mean
+                distribution.
+        """
+        c_mean_dist_ = sum([c.train_sample_dist for c in clients])
+        c_mean_dist_ = c_mean_dist_ / c_mean_dist_.sum()
+        base_dist_ = base_dist / base_dist.sum()
+
+        distance = np.inf
+        if use_distance == "l1":
+            dist_diff_ = c_mean_dist_ - base_dist_
+            distance = np.linalg.norm(dist_diff_, ord=1)
+        elif use_distance == "l2":
+            dist_diff_ = c_mean_dist_ - base_dist_
+            distance = np.linalg.norm(dist_diff_, ord=2)
+        elif use_distance == "cosine":
+            mean_dist_norm_ = np.linalg.norm(c_mean_dist_)
+            base_dist_norm_ = np.linalg.norm(base_dist_)
+            distance = c_mean_dist_.dot(base_dist_) / (mean_dist_norm_ * base_dist_norm_)
+        elif use_distance == "js":
+            distance = scipy.spatial.distance.jensenshannon(c_mean_dist_, base_dist_)
+        elif use_distance == "wasserstein":
+            distance = scipy.stats.wasserstein_distance(c_mean_dist_, base_dist_)
+
+        return distance
 
     def train_model(self, num_syncs):
         """Train self.model for num_syncs synchronizations."""

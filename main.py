@@ -108,7 +108,9 @@ def main():
     # Training simulation
     for r in range(1, num_rounds + 1):
         # Select clients
-        top_server.select_clients(r, clients_per_group)
+        top_server.select_clients(
+            r, clients_per_group, "approx_iid", global_test_dist,
+            display=True, metrics_dir=args.metrics_dir)
         _ = get_clients_info(top_server.selected_clients)
         c_ids, c_groups, c_num_samples = _
 
@@ -223,11 +225,12 @@ def get_clients_dist(
 
             np.random.seed(0)
             rand_clients = np.random.choice(clients, max_num_clients)
-            plot_clients_dist(rand_clients,
-                              global_dist,
-                              global_train_dist,
-                              global_test_dist,
-                              metrics_dir)
+            plot_clients_dist(clients=rand_clients,
+                              global_dist=global_dist,
+                              global_train_dist=global_train_dist,
+                              global_test_dist=global_test_dist,
+                              draw_mean=False,
+                              metrics_dir=metrics_dir)
 
         except ModuleNotFoundError:
             pass
