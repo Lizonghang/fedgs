@@ -98,17 +98,15 @@ class TopServer(Server):
 
         self.middle_servers.extend(servers)
 
-    def select_clients(self, my_round, clients_per_group, sample="random",
+    def select_clients(self, my_round, clients_per_group, sampler="random",
                        base_dist=None, display=False, metrics_dir="metrics"):
         """Call middle servers to select clients."""
-        assert sample in ["random", "approx_iid", "brute"]
-
         selected_info = []
         self.selected_clients = []
 
         for s in self.middle_servers:
             _ = s.select_clients(
-                my_round, clients_per_group, sample, base_dist, display, metrics_dir)
+                my_round, clients_per_group, sampler, base_dist, display, metrics_dir)
             clients, info = _
             self.selected_clients.extend(clients)
             selected_info.extend(info)
@@ -181,7 +179,7 @@ class MiddleServer(Server):
 
         self.clients.extend(clients)
 
-    def select_clients(self, my_round, clients_per_group, sample="random",
+    def select_clients(self, my_round, clients_per_group, sampler="random",
                        base_dist=None, display=False, metrics_dir="metrics"):
         """Randomly select clients_per_group clients for this round."""
         online_clients = self.online(self.clients)
@@ -198,21 +196,25 @@ class MiddleServer(Server):
 
         # Select rest clients to meet approximate i.i.d. dist
         rest_clients = np.delete(online_clients, rand_clients_idx).tolist()
-        if sample == "random":
+        if sampler == "random":
             sample_clients = self.random_sampling(
                 rest_clients, num_sample_clients, my_round)
-        elif sample == "approx_iid":
+        elif sampler == "approx_iid":
             sample_clients = self.approximate_iid_sampling(
                 rest_clients, num_sample_clients, base_dist, rand_clients)
-        elif sample == "brute":
+        elif sampler == "brute":
             sample_clients = self.brute_sampling(
+                rest_clients, num_sample_clients, base_dist, rand_clients)
+        elif sampler == "bayesian":
+            sample_clients = self.bayesian_sampling(
                 rest_clients, num_sample_clients, base_dist, rand_clients)
 
         self.selected_clients = rand_clients + sample_clients
 
         # Measure the distance of base distribution and mean distribution
         distance = self.get_dist_distance(self.selected_clients, base_dist)
-        print("Dist Distance on Middle Server %i:" % self.server_id, distance)
+        print("Dist Distance on Middle Server %i:"
+              % self.server_id, distance, flush=True)
 
         # Visualize distributions if needed
         if display:
@@ -237,11 +239,12 @@ class MiddleServer(Server):
             rand_clients: List of randomly sampled clients.
         """
         np.random.seed(my_round)
-        rand_clients_ = np.random.choice(clients, num_clients, replace=False)
-        return rand_clients_.tolist()
+        rand_clients_ = np.random.choice(
+            clients, num_clients, replace=False).tolist()
+        return rand_clients_
 
     def approximate_iid_sampling(self, clients, num_clients, base_dist, exist_clients):
-        """TODO(Yihong): Implement approximate i.i.d. sampling algorithm.
+        """
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
@@ -251,6 +254,7 @@ class MiddleServer(Server):
             approx_clients: List of sampled clients, which makes
                 self.selected_clients approximate to i.i.d. distribution.
         """
+        # TODO(Yihong)
         approx_clients_ = clients[:num_clients]
         return approx_clients_
 
@@ -287,6 +291,20 @@ class MiddleServer(Server):
         recursive_combine(clients, 0, num_clients, best_clients_, min_distance_)
 
         return best_clients_
+
+    def bayesian_sampling(self, clients, num_clients, base_dist, exist_clients):
+        """Search for an approximate optimal solution using bayesian optimization.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            base_dist: Real data distribution, usually global_test_dist.
+            exist_clients: List of existing clients.
+        Returns:
+            approx_clients: List of sampled clients, which makes
+                self.selected_clients approximate to i.i.d. distribution.
+        """
+        approx_clients_ = clients[:num_clients]
+        return approx_clients_
 
     def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
         """Return distance of the base distribution and the mean distribution.

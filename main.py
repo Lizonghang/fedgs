@@ -109,8 +109,8 @@ def main():
     for r in range(1, num_rounds + 1):
         # Select clients
         top_server.select_clients(
-            r, clients_per_group, "approx_iid", global_test_dist,
-            display=True, metrics_dir=args.metrics_dir)
+            r, clients_per_group, args.sampler, global_test_dist,
+            display=False, metrics_dir=args.metrics_dir)
         _ = get_clients_info(top_server.selected_clients)
         c_ids, c_groups, c_num_samples = _
 
