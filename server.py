@@ -321,6 +321,8 @@ class MiddleServer(Server):
     def bayesian_sampling(self, clients, num_clients, my_round, base_dist,
                           exist_clients, init_points=5, n_iter=25, verbose=0):
         """Search for an approximate optimal solution using bayesian optimization.
+        Please refer to the link below for more details.
+            https://github.com/fmfn/BayesianOptimization
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
