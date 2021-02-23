@@ -195,6 +195,7 @@ class MiddleServer(Server):
         rand_clients = np.take(online_clients, rand_clients_idx).tolist()
 
         # Select rest clients to meet approximate i.i.d. dist
+        sample_clients = []
         rest_clients = np.delete(online_clients, rand_clients_idx).tolist()
         if sampler == "random":
             sample_clients = self.random_sampling(
@@ -207,14 +208,14 @@ class MiddleServer(Server):
                 rest_clients, num_sample_clients, base_dist, rand_clients)
         elif sampler == "bayesian":
             sample_clients = self.bayesian_sampling(
-                rest_clients, num_sample_clients, base_dist, rand_clients)
+                rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
 
         self.selected_clients = rand_clients + sample_clients
 
         # Measure the distance of base distribution and mean distribution
-        distance = self.get_dist_distance(self.selected_clients, base_dist)
-        print("Dist Distance on Middle Server %i:"
-              % self.server_id, distance, flush=True)
+        # distance = self.get_dist_distance(self.selected_clients, base_dist)
+        # print("Dist Distance on Middle Server %i:"
+        #       % self.server_id, distance, flush=True)
 
         # Visualize distributions if needed
         if display:
@@ -229,18 +230,43 @@ class MiddleServer(Server):
                 for c in self.selected_clients]
         return self.selected_clients, info
 
-    def random_sampling(self, clients, num_clients, my_round):
+    def random_sampling(self, clients, num_clients, my_round, base_dist=None,
+                        exist_clients=None, num_iter=1):
         """Randomly sample num_clients clients from given clients.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
             my_round: The current training round, used as random seed.
+            base_dist: Real data distribution, usually global_test_dist.
+            exist_clients: List of existing clients.
+            num_iter: Number of iterations for sampling.
         Returns:
             rand_clients: List of randomly sampled clients.
         """
         np.random.seed(my_round)
-        rand_clients_ = np.random.choice(
-            clients, num_clients, replace=False).tolist()
+        rand_clients_ = []
+
+        if num_iter == 1:
+            rand_clients_ = np.random.choice(
+                clients, num_clients, replace=False).tolist()
+
+        elif num_iter > 1:
+            min_distance_ = 1
+            rand_clients_ = []
+
+            while num_iter > 0:
+                rand_clients_tmp_ = np.random.choice(
+                    clients, num_clients, replace=False).tolist()
+
+                all_clients_ = exist_clients + rand_clients_tmp_
+                distance_ = self.get_dist_distance(all_clients_, base_dist)
+
+                if distance_ < min_distance_:
+                    min_distance_ = distance_
+                    rand_clients_[:] = rand_clients_tmp_
+
+                num_iter -= 1
+
         return rand_clients_
 
     def approximate_iid_sampling(self, clients, num_clients, base_dist, exist_clients):
@@ -292,18 +318,68 @@ class MiddleServer(Server):
 
         return best_clients_
 
-    def bayesian_sampling(self, clients, num_clients, base_dist, exist_clients):
+    def bayesian_sampling(self, clients, num_clients, my_round, base_dist,
+                          exist_clients, init_points=5, n_iter=25, verbose=0):
         """Search for an approximate optimal solution using bayesian optimization.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
+            my_round: The current training round, used as random seed.
             base_dist: Real data distribution, usually global_test_dist.
             exist_clients: List of existing clients.
+            init_points: Number of iterations before the explorations starts. Random
+                exploration can help by diversifying the exploration space.
+            n_iter: Number of iterations to perform bayesian optimization.
+            verbose: The level of verbosity, set verbose>0 to it.
         Returns:
             approx_clients: List of sampled clients, which makes
                 self.selected_clients approximate to i.i.d. distribution.
         """
-        approx_clients_ = clients[:num_clients]
+        from bayes_opt import BayesianOptimization
+        from bayes_opt.logger import JSONLogger
+        from bayes_opt.event import Events
+
+        TINY_VALUE = 1e-12
+        INVALID_FEEDBACK = -1
+
+        def get_indexes_(**kwargs):
+            c_idx_ = map(int, kwargs.values())
+            c_idx_ = list(c_idx_)
+            return c_idx_
+
+        def distance_blackbox_(**kwargs):
+            # Get clients' indexes and drop repeat clients
+            c_idx_ = get_indexes_(**kwargs)
+            if len(set(c_idx_)) != len(c_idx_):
+                return INVALID_FEEDBACK
+
+            # Get clients and calculate distance
+            sample_clients_ = np.take(clients, c_idx_).tolist()
+            all_clients_ = exist_clients + sample_clients_
+            distance = self.get_dist_distance(all_clients_, base_dist)
+
+            # Aim to maximize -distance
+            return -distance
+
+        pbounds_ = {}
+        for i in range(num_clients):
+            pbounds_["p%i" % (i+1)] = (0, len(clients) - TINY_VALUE)
+
+        optimizer = BayesianOptimization(
+            f=distance_blackbox_,
+            pbounds=pbounds_,
+            random_state=my_round,
+            verbose=verbose
+        )
+
+        optimizer.maximize(
+            init_points=init_points,
+            n_iter=n_iter,
+        )
+
+        optimal_params = optimizer.max["params"]
+        c_idx_ = get_indexes_(**optimal_params)
+        approx_clients_ = np.take(clients, c_idx_).tolist()
         return approx_clients_
 
     def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
