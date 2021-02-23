@@ -45,6 +45,7 @@ including:
 | --eval-every | 20 | integer | Evaluate the federated model every few rounds. |
 | --num-groups | 10 | integer | Number of groups. |
 | --clients-per-group | 10 | integer | Number of clients trained per group. |
+| -sampler | random | random, brute, bayesian, approx_iid | Name of sampler to be used. |
 | --batch-size | 5 | integer | Number of training samples in each batch. |
 | --num-syncs | 50 | integer | Number of local epochs in each round. |
 | -lr| 0.01 | float | Learning rate for local optimizers. |
@@ -66,6 +67,7 @@ Some commonly used hyper-parameters can also be set through
 | LEARNING_RATE | -lr | Same as the above table. |
 | NUM_GROUPS | --num-groups | Same as the above table. |
 | CLIENTS_PER_GROUP | --clients-per-group | Same as the above table. |
+| SAMPLER | -sampler | Same as the above table. |
 | NUM_SYNCS | --num-syncs | Same as the above table. |
 | NUM_ROUNDS | --num-rounds | Same as the above table. |
 | DATASET | -dataset | Same as the above table. |
