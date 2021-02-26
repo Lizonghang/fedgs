@@ -107,3 +107,9 @@ venv.bak/
 *.DS_Store
 .idea/
 .vs/
+
+# local test files
+logs/
+drawer.py
+metrics_stat_*
+metrics_sys_*
