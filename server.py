@@ -7,15 +7,14 @@ from baseline_constants import BYTES_WRITTEN_KEY, \
 
 
 class Server(ABC):
-
     def __init__(self, server_model, merged_update):
         self.model = server_model
         self.merged_update = merged_update
         self.total_weight = 0
 
     @abstractmethod
-    def select_clients(
-            self, my_round, clients_per_group, sample, base_dist, display, metrics_dir):
+    def select_clients(self, my_round, clients_per_group, sample, base_dist,
+                       display, metrics_dir, rand_per_group):
         """Select clients_per_group clients from each group.
         Args:
             my_round: The current training round, used for
@@ -27,6 +26,7 @@ class Server(ABC):
             base_dist: Real data distribution, usually global_test_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
+            rand_per_group: Number of randomly sampled clients.
         Returns:
             selected_clients: List of clients being selected.
             client_info: List of (num_train_samples, num_test_samples)
@@ -35,11 +35,13 @@ class Server(ABC):
         return None
 
     @abstractmethod
-    def train_model(self, num_syncs):
+    def train_model(self, my_round, num_syncs):
         """Aggregate clients' models after each iteration. If
         num_syncs synchronizations are reached, middle servers'
         models are then aggregated at the top server.
         Args:
+            my_round: The current training round, used for learning rate
+                decay.
             num_syncs: Number of client - middle server synchronizations
                 in each round before sending to the top server.
         Returns:
@@ -81,7 +83,6 @@ class Server(ABC):
 
 
 class TopServer(Server):
-
     def __init__(self, server_model, merged_update, servers):
         self.middle_servers = []
         self.register_middle_servers(servers)
@@ -99,28 +100,30 @@ class TopServer(Server):
         self.middle_servers.extend(servers)
 
     def select_clients(self, my_round, clients_per_group, sampler="random",
-                       base_dist=None, display=False, metrics_dir="metrics"):
+                       base_dist=None, display=False, metrics_dir="metrics",
+                       rand_per_group=2):
         """Call middle servers to select clients."""
         selected_info = []
         self.selected_clients = []
 
         for s in self.middle_servers:
             _ = s.select_clients(
-                my_round, clients_per_group, sampler, base_dist, display, metrics_dir)
+                my_round, clients_per_group, sampler, base_dist,
+                display, metrics_dir, rand_per_group)
             clients, info = _
             self.selected_clients.extend(clients)
             selected_info.extend(info)
 
         return selected_info
 
-    def train_model(self, num_syncs):
+    def train_model(self, my_round, num_syncs):
         """Call middle servers to train their models and aggregate
         their updates."""
         sys_metrics = {}
 
         for s in self.middle_servers:
             s.set_model(self.model)
-            s_sys_metrics, update = s.train_model(num_syncs)
+            s_sys_metrics, update = s.train_model(my_round, num_syncs)
             self.merge_updates(s.num_selected_clients, update)
 
             sys_metrics.update(s_sys_metrics)
@@ -161,7 +164,6 @@ class TopServer(Server):
 
 
 class MiddleServer(Server):
-
     def __init__(self, server_id, server_model, merged_update, clients_in_group):
         self.server_id = server_id
         self.clients = []
@@ -180,18 +182,18 @@ class MiddleServer(Server):
         self.clients.extend(clients)
 
     def select_clients(self, my_round, clients_per_group, sampler="random",
-                       base_dist=None, display=False, metrics_dir="metrics"):
+                       base_dist=None, display=False, metrics_dir="metrics",
+                       rand_per_group=2):
         """Randomly select clients_per_group clients for this round."""
         online_clients = self.online(self.clients)
         num_clients = len(online_clients)
-        num_sample_clients = min(clients_per_group, num_clients)
-        num_rand_clients = num_sample_clients // 2
-        num_sample_clients = num_sample_clients - num_rand_clients
+        num_sample_clients = min(clients_per_group, num_clients) \
+                             - rand_per_group
 
         # Randomly select half of num_clients clients
         np.random.seed(my_round)
         rand_clients_idx = np.random.choice(
-            range(num_clients), num_rand_clients, replace=False)
+            range(num_clients), rand_per_group, replace=False)
         rand_clients = np.take(online_clients, rand_clients_idx).tolist()
 
         # Select rest clients to meet approximate i.i.d. dist
@@ -213,9 +215,9 @@ class MiddleServer(Server):
         self.selected_clients = rand_clients + sample_clients
 
         # Measure the distance of base distribution and mean distribution
-        # distance = self.get_dist_distance(self.selected_clients, base_dist)
-        # print("Dist Distance on Middle Server %i:"
-        #       % self.server_id, distance, flush=True)
+        distance = self.get_dist_distance(self.selected_clients, base_dist)
+        print("Dist Distance on Middle Server %i:"
+              % self.server_id, distance, flush=True)
 
         # Visualize distributions if needed
         if display:
@@ -280,7 +282,7 @@ class MiddleServer(Server):
             approx_clients: List of sampled clients, which makes
                 self.selected_clients approximate to i.i.d. distribution.
         """
-        # TODO(Yihong)
+        print("MP INV")
         approx_clients_ = clients[:num_clients]
         return approx_clients_
 
@@ -308,10 +310,10 @@ class MiddleServer(Server):
                     best_clients_[:] = clients_tmp_
                     min_distance_[0] = distance_
             elif num_clients_ > 0:
-                for i in range(start, len(clients_)-num_clients_+1):
+                for i in range(start, len(clients_) - num_clients_ + 1):
                     clients_tmp_.append(clients_[i])
                     recursive_combine(
-                        clients_, i+1, num_clients_-1, best_clients_, min_distance_)
+                        clients_, i + 1, num_clients_ - 1, best_clients_, min_distance_)
                     clients_tmp_.remove(clients_[i])
 
         recursive_combine(clients, 0, num_clients, best_clients_, min_distance_)
@@ -341,19 +343,16 @@ class MiddleServer(Server):
         from bayes_opt.logger import JSONLogger
         from bayes_opt.event import Events
 
-        TINY_VALUE = 1e-12
-        INVALID_FEEDBACK = -1
-
         def get_indexes_(**kwargs):
             c_idx_ = map(int, kwargs.values())
             c_idx_ = list(c_idx_)
             return c_idx_
 
         def distance_blackbox_(**kwargs):
-            # Get clients' indexes and drop repeat clients
+            # Get clients' indexes
             c_idx_ = get_indexes_(**kwargs)
-            if len(set(c_idx_)) != len(c_idx_):
-                return INVALID_FEEDBACK
+            assert len(set(c_idx_)) == len(c_idx_), \
+                "Repeat clients are sampled."
 
             # Get clients and calculate distance
             sample_clients_ = np.take(clients, c_idx_).tolist()
@@ -364,8 +363,11 @@ class MiddleServer(Server):
             return -distance
 
         pbounds_ = {}
+        interval_ = len(clients) / num_clients
         for i in range(num_clients):
-            pbounds_["p%i" % (i+1)] = (0, len(clients) - TINY_VALUE)
+            bound_left_ = int(i * interval_)
+            bound_right_ = int(min((i + 1) * interval_, len(clients))) - 1e-12
+            pbounds_["p%i" % (i + 1)] = (bound_left_, bound_right_)
 
         optimizer = BayesianOptimization(
             f=distance_blackbox_,
@@ -384,7 +386,7 @@ class MiddleServer(Server):
         approx_clients_ = np.take(clients, c_idx_).tolist()
         return approx_clients_
 
-    def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
+    def get_dist_distance(self, clients, base_dist, use_distance="l2"):
         """Return distance of the base distribution and the mean distribution.
         Args:
             clients: List of sampled clients.
@@ -417,7 +419,7 @@ class MiddleServer(Server):
 
         return distance
 
-    def train_model(self, num_syncs):
+    def train_model(self, my_round, num_syncs):
         """Train self.model for num_syncs synchronizations."""
         clients = self.selected_clients
 
@@ -430,7 +432,7 @@ class MiddleServer(Server):
         for _ in range(num_syncs):
             for c in clients:
                 c.set_model(self.model)
-                comp, num_samples, update = c.train()
+                comp, num_samples, update = c.train(my_round)
                 self.merge_updates(num_samples, update)
 
                 s_sys_metrics[c.id][BYTES_READ_KEY] += c.model.size

@@ -23,14 +23,17 @@ class Client:
         self.train_data_iter = batch_data(
             self.train_data, batch_size, seed=self.seed)
 
-    def train(self):
+    def train(self, my_round):
         """Trains on self.model using one batch of train_data.
+        Args:
+            my_round: The current training round, used for learning rate
+                decay.
         Returns:
             comp: number of FLOPs executed in training process
             num_samples: number of samples used in training
             update:
         """
-        comp, num_samples, update = self.model.train(self.train_data_iter)
+        comp, num_samples, update = self.model.train(self.train_data_iter, my_round)
         return comp, num_samples, update
 
     def test(self, set_to_use="test"):

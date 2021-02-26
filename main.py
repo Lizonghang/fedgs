@@ -81,7 +81,7 @@ def main():
           file=log_fp, flush=True)
 
     # Measure the global data distribution
-    _, _, global_test_dist = get_clients_dist(
+    global_dist, _, _ = get_clients_dist(
         clients, display=True, max_num_clients=20, metrics_dir=args.metrics_dir)
 
     # Create middle servers
@@ -109,8 +109,8 @@ def main():
     for r in range(1, num_rounds + 1):
         # Select clients
         top_server.select_clients(
-            r, clients_per_group, args.sampler, global_test_dist,
-            display=False, metrics_dir=args.metrics_dir)
+            r, clients_per_group, args.sampler, global_dist, display=False,
+            metrics_dir=args.metrics_dir, rand_per_group=args.rand_per_group)
         _ = get_clients_info(top_server.selected_clients)
         c_ids, c_groups, c_num_samples = _
 
@@ -119,7 +119,7 @@ def main():
               file=log_fp, flush=True)
 
         # Simulate server model training on selected clients' data
-        sys_metrics = top_server.train_model(args.num_syncs)
+        sys_metrics = top_server.train_model(r, args.num_syncs)
         sys_writer_fn(r, c_ids, sys_metrics, c_groups, c_num_samples)
 
         # Test model

@@ -39,11 +39,14 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data_iter):
+    def train(self, data_iter, my_round, lr_factor=0.985):
         """
         Train the model using a batch of data.
         Args:
             data_iter: An iterator to generate batches of train data.
+            my_round: The current training round, used for learning rate
+                decay.
+            lr_factor: Decay factor for learning rate.
         Returns:
             comp: Number of FLOPs computed while training given data.
                 If --count-op is not set, FLOPs = 0 will be returned.
@@ -54,6 +57,10 @@ class Model(ABC):
         input_data = self.preprocess_x(batched_x)
         target_data = self.preprocess_y(batched_y)
         num_samples = len(batched_y)
+
+        # Decay learning rate
+        self.trainer.set_learning_rate(
+            self.lr * (lr_factor ** my_round))
 
         # Set MXNET_ENFORCE_DETERMINISM=1 to avoid difference in
         # calculation precision.
