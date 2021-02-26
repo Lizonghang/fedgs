@@ -29,7 +29,7 @@ label_fontsize = 14
 tick_fontsize = 13
 
 
-def load_data(stat_metrics_file, sys_metrics_file):
+def load_data(stat_metrics_file, sys_metrics_file=None):
     """Loads the data from the given stat_metric and sys_metric files."""
     stat_metrics = pd.read_csv(stat_metrics_file) if stat_metrics_file else None
     sys_metrics = pd.read_csv(sys_metrics_file) if sys_metrics_file else None
@@ -337,7 +337,7 @@ def compare_accuracy_vs_round_number(
     plt.title("%s Accuracy vs Round Number (%s)" % (use_set, title_weighted),
               fontsize=title_fontsize)
 
-    for stat_metrics, _ in metrics:
+    for stat_metrics in metrics:
 
         stat_metrics = stat_metrics.query("set=='%s'" % use_set.lower())
 
@@ -363,8 +363,8 @@ def compare_accuracy_vs_round_number(
     plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    plt.xlim((0, 500))
-    plt.ylim(bottom=0)
+    # plt.xlim((0, 500))
+    # plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 
@@ -389,7 +389,7 @@ def compare_loss_vs_round_number(
     plt.title("%s Loss vs Round Number (%s)" % (use_set, title_weighted),
               fontsize=title_fontsize)
 
-    for stat_metrics, _ in metrics:
+    for stat_metrics in metrics:
 
         stat_metrics = stat_metrics.query("set=='%s'" % use_set.lower())
 
@@ -414,8 +414,8 @@ def compare_loss_vs_round_number(
     plt.ylabel("%s Loss" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    plt.xlim((0, 500))
-    plt.ylim(bottom=0)
+    # plt.xlim((0, 500))
+    # plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 

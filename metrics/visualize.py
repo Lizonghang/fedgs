@@ -2,7 +2,7 @@ import visualization_utils
 
 SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy
 PLOT_CLIENTS = True
-PLOT_SET = "Train"  # "Test" or "Train"
+PLOT_SET = "Test"  # "Test" or "Train"
 stat_file = "metrics_stat.csv"  # change to None if desired
 sys_file = "metrics_sys.csv"  # change to None if desired
 
@@ -46,33 +46,33 @@ def calc_longest_flops(stat_metrics, sys_metrics):
           visualization_utils.get_longest_flops_path(sys_metrics))
 
 
-def compare_accuracy_vs_round(metrics):
+def compare_accuracy_vs_round(metrics, legend):
     """Compare accuracy vs. round number across experiments."""
     visualization_utils.compare_accuracy_vs_round_number(
-        metrics, legend=("Exp 8", "Exp 9"), use_set=PLOT_SET,
+        metrics, legend, use_set=PLOT_SET,
         weighted=SHOW_WEIGHTED, plot_stds=False)
 
 
-def compare_loss_vs_round(metrics):
+def compare_loss_vs_round(metrics, legend):
     """Compare loss vs. round number across experiments."""
     visualization_utils.compare_loss_vs_round_number(
-        metrics, legend=("Exp 8", "Exp 9"), use_set=PLOT_SET,
+        metrics, legend, use_set=PLOT_SET,
         weighted=SHOW_WEIGHTED, plot_stds=False)
 
 
 if __name__ == "__main__":
-    metrics = visualization_utils.load_data(stat_file, sys_file)
-    plot_acc_vs_round(*metrics)
+    # metrics = visualization_utils.load_data(stat_file, sys_file)
+    # plot_acc_vs_round(*metrics)
     # plot_loss_vs_round(*metrics)
     # plot_bytes_vs_round(*metrics)
     # plot_comp_vs_round(*metrics)
     # calc_longest_flops(*metrics)
 
-    # stat_files = ["metrics_stat_8.csv", "metrics_stat_9.csv"]
-    # sys_files = ["metrics_sys_8.csv", "metrics_sys_9.csv"]
-    #
-    # metrics = [visualization_utils.load_data(stat_file, sys_file)
-    #            for stat_file, sys_file in zip(stat_files, sys_files)]
-    #
-    # compare_accuracy_vs_round(metrics)
-    # compare_loss_vs_round(metrics)
+    stat_files = ("metrics_stat_9.csv", "metrics_stat_8.csv")
+    legend = ("Exp 9", "Exp 8")
+
+    metrics = [visualization_utils.load_data(f)[0]
+               for f in stat_files]
+
+    compare_accuracy_vs_round(metrics, legend)
+    compare_loss_vs_round(metrics, legend)
