@@ -46,6 +46,20 @@ def calc_longest_flops(stat_metrics, sys_metrics):
           visualization_utils.get_longest_flops_path(sys_metrics))
 
 
+def compare_accuracy_vs_round(metrics):
+    """Compare accuracy vs. round number across experiments."""
+    visualization_utils.compare_accuracy_vs_round_number(
+        metrics, legend=("Exp 8", "Exp 9"), use_set=PLOT_SET,
+        weighted=SHOW_WEIGHTED, plot_stds=False)
+
+
+def compare_loss_vs_round(metrics):
+    """Compare loss vs. round number across experiments."""
+    visualization_utils.compare_loss_vs_round_number(
+        metrics, legend=("Exp 8", "Exp 9"), use_set=PLOT_SET,
+        weighted=SHOW_WEIGHTED, plot_stds=False)
+
+
 if __name__ == "__main__":
     metrics = visualization_utils.load_data(stat_file, sys_file)
     plot_acc_vs_round(*metrics)
@@ -53,3 +67,12 @@ if __name__ == "__main__":
     # plot_bytes_vs_round(*metrics)
     # plot_comp_vs_round(*metrics)
     # calc_longest_flops(*metrics)
+
+    # stat_files = ["metrics_stat_8.csv", "metrics_stat_9.csv"]
+    # sys_files = ["metrics_sys_8.csv", "metrics_sys_9.csv"]
+    #
+    # metrics = [visualization_utils.load_data(stat_file, sys_file)
+    #            for stat_file, sys_file in zip(stat_files, sys_files)]
+    #
+    # compare_accuracy_vs_round(metrics)
+    # compare_loss_vs_round(metrics)

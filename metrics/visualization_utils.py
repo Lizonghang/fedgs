@@ -8,7 +8,6 @@ import numpy as np
 import os
 import pandas as pd
 import sys
-from mxnet import nd
 
 from decimal import Decimal
 
@@ -62,6 +61,7 @@ def plot_accuracy_vs_round_number(
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
+        use_set: Data used to plot.
         weighted: Whether the average across clients should be weighted by number of
             test samples.
         plot_stds: Whether to plot error bars corresponding to the std between users.
@@ -118,6 +118,7 @@ def plot_loss_vs_round_number(
 
     Args:
         stat_metrics: pd.DataFrame as written by writer.py.
+        use_set: Data used to plot.
         weighted: Whether the average across clients should be weighted by number of
             test samples.
         plot_stds: Whether to plot error bars corresponding to the std between users.
@@ -197,6 +198,7 @@ def plot_accuracy_vs_round_number_per_client(
             performed training in each round. If None, then no indication is given of when was
             each client trained.
         max_num_clients: Maximum number of clients to plot.
+        use_set: Data used to plot.
         figsize: Size of the plot as specified by plt.figure().
         max_name_len: Maximum length for a client's id.
         kwargs: Arguments to be passed to _set_plot_properties.
@@ -261,6 +263,7 @@ def plot_loss_vs_round_number_per_client(
             performed training in each round. If None, then no indication is given of when was
             each client trained.
         max_num_clients: Maximum number of clients to plot.
+        use_set: Data used to plot.
         figsize: Size of the plot as specified by plt.figure().
         max_name_len: Maximum length for a client's id.
         kwargs: Arguments to be passed to _set_plot_properties.
@@ -314,6 +317,109 @@ def plot_loss_vs_round_number_per_client(
     plt.show()
 
 
+def compare_accuracy_vs_round_number(
+        metrics, legend=None, use_set="Test", weighted=False,
+        plot_stds=False, figsize=(6, 4.5),  **kwargs):
+    """Compare the average accuracy vs the round number.
+
+    Args:
+        metrics: List of pd.DataFrame objects to compare.
+        legend: Legend text to be placed on the axes.
+        use_set: Data used to plot.
+        weighted: Whether the average across clients should be weighted by number of
+            test samples.
+        plot_stds: Whether to plot error bars corresponding to the std between users.
+        figsize: Size of the plot as specified by plt.figure().
+        kwargs: Arguments to be passed to _set_plot_properties.
+    """
+    plt.figure(figsize=figsize)
+    title_weighted = "Weighted" if weighted else "Unweighted"
+    plt.title("%s Accuracy vs Round Number (%s)" % (use_set, title_weighted),
+              fontsize=title_fontsize)
+
+    for stat_metrics, _ in metrics:
+
+        stat_metrics = stat_metrics.query("set=='%s'" % use_set.lower())
+
+        if weighted:
+            accuracies = stat_metrics.groupby(NUM_ROUND_KEY)\
+                .apply(_weighted_mean, ACCURACY_KEY, NUM_SAMPLES_KEY)
+            accuracies = accuracies.reset_index(name=ACCURACY_KEY)
+
+            stds = stat_metrics.groupby(NUM_ROUND_KEY)\
+                .apply(_weighted_std, ACCURACY_KEY, NUM_SAMPLES_KEY)
+            stds = stds.reset_index(name=ACCURACY_KEY)
+        else:
+            accuracies = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).mean()
+            stds = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).std()
+
+        if plot_stds:
+            plt.errorbar(accuracies[NUM_ROUND_KEY], accuracies[ACCURACY_KEY], stds[ACCURACY_KEY])
+        else:
+            plt.plot(accuracies[NUM_ROUND_KEY], accuracies[ACCURACY_KEY])
+
+    plt.legend(legend, loc="lower right", fontsize=legend_fontsize)
+
+    plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
+    plt.xlabel("Round Number", fontsize=label_fontsize)
+    plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 500))
+    plt.ylim((0, 0.9))
+    _set_plot_properties(kwargs)
+    plt.show()
+
+
+def compare_loss_vs_round_number(
+        metrics, legend=None, use_set="Test", weighted=False,
+        plot_stds=False, figsize=(6, 4.5),  **kwargs):
+    """Compare the average loss vs the round number.
+
+    Args:
+        metrics: List of pd.DataFrame objects to compare.
+        legend: Legend text to be placed on the axes.
+        use_set: Data used to plot.
+        weighted: Whether the average across clients should be weighted by number of
+            test samples.
+        plot_stds: Whether to plot error bars corresponding to the std between users.
+        figsize: Size of the plot as specified by plt.figure().
+        kwargs: Arguments to be passed to _set_plot_properties.
+    """
+    plt.figure(figsize=figsize)
+    title_weighted = "Weighted" if weighted else "Unweighted"
+    plt.title("%s Loss vs Round Number (%s)" % (use_set, title_weighted),
+              fontsize=title_fontsize)
+
+    for stat_metrics, _ in metrics:
+
+        stat_metrics = stat_metrics.query("set=='%s'" % use_set.lower())
+
+        if weighted:
+            losses = stat_metrics.groupby(NUM_ROUND_KEY)\
+                .apply(_weighted_mean, "loss", NUM_SAMPLES_KEY)
+            losses = losses.reset_index(name="loss")
+
+            stds = stat_metrics.groupby(NUM_ROUND_KEY)\
+                .apply(_weighted_std, "loss", NUM_SAMPLES_KEY)
+            stds = stds.reset_index(name="loss")
+        else:
+            losses = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).mean()
+            stds = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).std()
+
+        if plot_stds:
+            plt.errorbar(losses[NUM_ROUND_KEY], losses["loss"], stds["loss"])
+        else:
+            plt.plot(losses[NUM_ROUND_KEY], losses["loss"])
+
+    plt.legend(legend, loc="lower right", fontsize=legend_fontsize)
+    plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
+    plt.xlabel("Round Number", fontsize=label_fontsize)
+    plt.tick_params(labelsize=tick_fontsize)
+    plt.xlim((0, 500))
+    plt.ylim(lower=0)
+    _set_plot_properties(kwargs)
+    plt.show()
+
+
 def plot_bytes_written_and_read(
         sys_metrics, rolling_window=10, figsize=(6, 4.5), **kwargs):
     """Plot the cumulative sum of the bytes pushed and pulled by all clients.
@@ -330,8 +436,8 @@ def plot_bytes_written_and_read(
     rounds = server_metrics[NUM_ROUND_KEY]
     server_metrics = server_metrics.rolling(
         rolling_window, on=NUM_ROUND_KEY, min_periods=1).sum()
-    plt.plot(rounds, server_metrics["bytes_written"], alpha=0.7)
-    plt.plot(rounds, server_metrics["bytes_read"], alpha=0.7)
+    plt.plot(rounds, server_metrics[BYTES_WRITTEN_KEY], alpha=0.7)
+    plt.plot(rounds, server_metrics[BYTES_READ_KEY], alpha=0.7)
 
     plt.title("Bytes Pushed and Pulled by Clients vs Round Number\n",
               fontsize=title_fontsize)
