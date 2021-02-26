@@ -6,6 +6,7 @@ BATCH_SIZE=5
 LEARNING_RATE=0.01
 NUM_GROUPS=10
 CLIENTS_PER_GROUP=10
+RAND_PER_GROUP=2
 SAMPLER="random"
 NUM_SYNCS=50
 NUM_ROUNDS=500
@@ -39,6 +40,7 @@ sudo docker exec -di ${CONTAINER_NAME} bash -c \
             --num-rounds ${NUM_ROUNDS} \
             --eval-every ${EVAL_EVERY} \
             --clients-per-group ${CLIENTS_PER_GROUP} \
+            --rand-per-group ${RAND_PER_GROUP} \
             -sampler ${SAMPLER} \
             --batch-size ${BATCH_SIZE} \
             --num-syncs ${NUM_SYNCS} \
