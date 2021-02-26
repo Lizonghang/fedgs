@@ -364,7 +364,7 @@ def compare_accuracy_vs_round_number(
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
     plt.xlim((0, 500))
-    plt.ylim((0, 0.9))
+    plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 
@@ -411,11 +411,11 @@ def compare_loss_vs_round_number(
             plt.plot(losses[NUM_ROUND_KEY], losses["loss"])
 
     plt.legend(legend, loc="lower right", fontsize=legend_fontsize)
-    plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
+    plt.ylabel("%s Loss" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
     plt.xlim((0, 500))
-    plt.ylim(lower=0)
+    plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 
