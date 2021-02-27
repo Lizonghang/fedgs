@@ -18,8 +18,8 @@ def batch_data(data, batch_size, seed):
         batched_x: A batch of features of length: batch_size.
         batched_y: A batch of labels of length: batch_size.
     """
-    data_x = data['x']
-    data_y = data['y']
+    data_x = data["x"]
+    data_y = data["y"]
 
     epochs = 0
     while True:
@@ -46,15 +46,15 @@ def read_dir(data_dir):
     data = defaultdict(lambda : None)
 
     files = os.listdir(data_dir)
-    files = [f for f in files if f.endswith('.json')]
+    files = [f for f in files if f.endswith(".json")]
     for f in files:
         file_path = os.path.join(data_dir, f)
-        with open(file_path, 'r') as inf:
+        with open(file_path, "r") as inf:
             cdata = json.load(inf)
-        clients.extend(cdata['users'])
-        if 'hierarchies' in cdata:
-            groups.extend(cdata['hierarchies'])
-        data.update(cdata['user_data'])
+        clients.extend(cdata["users"])
+        if "hierarchies" in cdata:
+            groups.extend(cdata["hierarchies"])
+        data.update(cdata["user_data"])
 
     clients = list(sorted(data.keys()))
     return clients, groups, data
@@ -97,7 +97,7 @@ def build_net(dataset, model_name, num_classes, ctx, seed=0, init=init.Xavier())
     """
     model_file = "%s/%s.py" % (dataset, model_name)
     if not os.path.exists(model_file):
-        print('Please specify a valid model.')
+        print("Please specify a valid model.")
     model_path = "%s.%s" % (dataset, model_name)
     mod = importlib.import_module(model_path)
     build_net_op = getattr(mod, "build_net")

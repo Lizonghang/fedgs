@@ -301,7 +301,7 @@ def print_metrics(metrics, weights, prefix="", log_fp=None):
     metric_names = metrics_writer.get_metrics_names(metrics)
     for metric in metric_names:
         ordered_metric = [metrics[c][metric] for c in sorted(metrics)]
-        print('%s: %g, 10th percentile: %g, 50th percentile: %g, 90th percentile %g' \
+        print("%s: %g, 10th percentile: %g, 50th percentile: %g, 90th percentile %g" \
               % (prefix + metric,
                  np.average(ordered_metric, weights=ordered_weights),
                  np.percentile(ordered_metric, 10),
