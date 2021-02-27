@@ -187,6 +187,13 @@ def _weighted_std(df, metric_name, weight_name):
         return np.nan
 
 
+def _moving_average(df, window_size=4):
+    tmp_ = df[:window_size - 1]
+    rolled_df = df.rolling(window_size).mean()
+    rolled_df[:window_size - 1] = tmp_
+    return rolled_df
+
+
 def plot_accuracy_vs_round_number_per_client(
         stat_metrics, sys_metrics, max_num_clients, use_set="Test",
         figsize=(10, 10), max_name_len=10, **kwargs):
@@ -318,8 +325,8 @@ def plot_loss_vs_round_number_per_client(
 
 
 def compare_accuracy_vs_round_number(
-        metrics, legend=None, use_set="Test", weighted=False,
-        plot_stds=False, figsize=(6, 4.5),  **kwargs):
+        metrics, legend=None, use_set="Test", weighted=False, move_avg=False,
+        window_size=4, plot_stds=False, figsize=(6, 4.5),  **kwargs):
     """Compare the average accuracy vs the round number.
 
     Args:
@@ -328,6 +335,8 @@ def compare_accuracy_vs_round_number(
         use_set: Data used to plot.
         weighted: Whether the average across clients should be weighted by number of
             test samples.
+        move_avg: Whether the accuracy is moving averaged.
+        window_size: Size of the moving window.
         plot_stds: Whether to plot error bars corresponding to the std between users.
         figsize: Size of the plot as specified by plt.figure().
         kwargs: Arguments to be passed to _set_plot_properties.
@@ -344,13 +353,18 @@ def compare_accuracy_vs_round_number(
         if weighted:
             accuracies = stat_metrics.groupby(NUM_ROUND_KEY)\
                 .apply(_weighted_mean, ACCURACY_KEY, NUM_SAMPLES_KEY)
+            if move_avg:
+                accuracies = _moving_average(accuracies, window_size)
             accuracies = accuracies.reset_index(name=ACCURACY_KEY)
+
 
             stds = stat_metrics.groupby(NUM_ROUND_KEY)\
                 .apply(_weighted_std, ACCURACY_KEY, NUM_SAMPLES_KEY)
             stds = stds.reset_index(name=ACCURACY_KEY)
         else:
             accuracies = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).mean()
+            if move_avg:
+                accuracies = _moving_average(accuracies, window_size)
             stds = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).std()
 
         if plot_stds:
@@ -363,15 +377,15 @@ def compare_accuracy_vs_round_number(
     plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    # plt.xlim((0, 500))
-    # plt.ylim(bottom=0)
+    plt.xlim((0, 500))
+    plt.ylim(bottom=0)
     _set_plot_properties(kwargs)
     plt.show()
 
 
 def compare_loss_vs_round_number(
-        metrics, legend=None, use_set="Test", weighted=False,
-        plot_stds=False, figsize=(6, 4.5),  **kwargs):
+        metrics, legend=None, use_set="Test", weighted=False, move_avg=False,
+        window_size=4, plot_stds=False, figsize=(6, 4.5),  **kwargs):
     """Compare the average loss vs the round number.
 
     Args:
@@ -380,6 +394,8 @@ def compare_loss_vs_round_number(
         use_set: Data used to plot.
         weighted: Whether the average across clients should be weighted by number of
             test samples.
+        move_avg: Whether the loss is moving averaged.
+        window_size: Size of the moving window.
         plot_stds: Whether to plot error bars corresponding to the std between users.
         figsize: Size of the plot as specified by plt.figure().
         kwargs: Arguments to be passed to _set_plot_properties.
@@ -396,6 +412,8 @@ def compare_loss_vs_round_number(
         if weighted:
             losses = stat_metrics.groupby(NUM_ROUND_KEY)\
                 .apply(_weighted_mean, "loss", NUM_SAMPLES_KEY)
+            if move_avg:
+                losses = _moving_average(losses, window_size)
             losses = losses.reset_index(name="loss")
 
             stds = stat_metrics.groupby(NUM_ROUND_KEY)\
@@ -403,6 +421,8 @@ def compare_loss_vs_round_number(
             stds = stds.reset_index(name="loss")
         else:
             losses = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).mean()
+            if move_avg:
+                losses = _moving_average(losses, window_size)
             stds = stat_metrics.groupby(NUM_ROUND_KEY, as_index=False).std()
 
         if plot_stds:
@@ -414,8 +434,7 @@ def compare_loss_vs_round_number(
     plt.ylabel("%s Loss" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    # plt.xlim((0, 500))
-    # plt.ylim(bottom=0)
+    plt.xlim((0, 500))
     _set_plot_properties(kwargs)
     plt.show()
 

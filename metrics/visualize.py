@@ -3,6 +3,7 @@ import visualization_utils
 SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy
 PLOT_CLIENTS = True
 PLOT_SET = "Test"  # "Test" or "Train"
+PLOT_MOVE_AVG = True
 stat_file = "metrics_stat.csv"  # change to None if desired
 sys_file = "metrics_sys.csv"  # change to None if desired
 
@@ -49,15 +50,15 @@ def calc_longest_flops(stat_metrics, sys_metrics):
 def compare_accuracy_vs_round(metrics, legend):
     """Compare accuracy vs. round number across experiments."""
     visualization_utils.compare_accuracy_vs_round_number(
-        metrics, legend, use_set=PLOT_SET,
-        weighted=SHOW_WEIGHTED, plot_stds=False)
+        metrics, legend, use_set=PLOT_SET, weighted=SHOW_WEIGHTED,
+        move_avg=PLOT_MOVE_AVG, window_size=4, plot_stds=False)
 
 
 def compare_loss_vs_round(metrics, legend):
     """Compare loss vs. round number across experiments."""
     visualization_utils.compare_loss_vs_round_number(
-        metrics, legend, use_set=PLOT_SET,
-        weighted=SHOW_WEIGHTED, plot_stds=False)
+        metrics, legend, use_set=PLOT_SET, weighted=SHOW_WEIGHTED,
+        move_avg=PLOT_MOVE_AVG, window_size=4, plot_stds=False)
 
 
 if __name__ == "__main__":
@@ -68,8 +69,10 @@ if __name__ == "__main__":
     # plot_comp_vs_round(*metrics)
     # calc_longest_flops(*metrics)
 
-    stat_files = ("metrics_stat_9.csv", "metrics_stat_8.csv")
-    legend = ("Exp 9", "Exp 8")
+    # stat_files = ("metrics_stat_9.csv", "metrics_stat_8.csv")
+    # legend = ("Exp 9", "Exp 8")
+    stat_files = ("metrics_stat_100.csv", "metrics_stat_101.csv")
+    legend = ("Exp 100", "Exp 101")
 
     metrics = [visualization_utils.load_data(f)[0]
                for f in stat_files]
