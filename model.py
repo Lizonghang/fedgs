@@ -39,7 +39,7 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data_iter, my_round, lr_factor=0.985):
+    def train(self, data_iter, my_round, lr_factor=1.0):
         """
         Train the model using a batch of data.
         Args:
