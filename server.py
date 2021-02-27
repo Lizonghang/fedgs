@@ -386,7 +386,7 @@ class MiddleServer(Server):
         approx_clients_ = np.take(clients, c_idx_).tolist()
         return approx_clients_
 
-    def get_dist_distance(self, clients, base_dist, use_distance="l2"):
+    def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
         """Return distance of the base distribution and the mean distribution.
         Args:
             clients: List of sampled clients.
