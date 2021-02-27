@@ -29,12 +29,12 @@ class Client:
             my_round: The current training round, used for learning rate
                 decay.
         Returns:
-            comp: number of FLOPs executed in training process
-            num_samples: number of samples used in training
-            update:
+            comp: Number of FLOPs executed in training process.
+            num_samples: Number of train samples on this client.
+            update: Trained model params.
         """
-        comp, num_samples, update = self.model.train(self.train_data_iter, my_round)
-        return comp, num_samples, update
+        comp, update = self.model.train(self.train_data_iter, my_round)
+        return comp, self.num_train_samples, update
 
     def test(self, set_to_use="test"):
         """Tests self.model on self.test_data.

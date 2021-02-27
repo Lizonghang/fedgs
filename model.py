@@ -50,7 +50,6 @@ class Model(ABC):
         Returns:
             comp: Number of FLOPs computed while training given data.
                 If --count-op is not set, FLOPs = 0 will be returned.
-            num_samples: Number of samples used to train given data.
             update: The model after training given data.
         """
         batched_x, batched_y = next(data_iter)
@@ -74,7 +73,7 @@ class Model(ABC):
 
         update = self.get_params()
         comp = num_samples * self.flops_per_sample
-        return comp, num_samples, update
+        return comp, update
 
     def __num_elems(self, shape):
         """Returns the number of elements in the given shape.
