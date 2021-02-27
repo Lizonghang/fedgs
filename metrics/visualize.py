@@ -4,6 +4,7 @@ SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy
 PLOT_CLIENTS = True
 PLOT_SET = "Test"  # "Test" or "Train"
 PLOT_MOVE_AVG = True
+WINDOW_SIZE = 5
 stat_file = "metrics_stat.csv"  # change to None if desired
 sys_file = "metrics_sys.csv"  # change to None if desired
 
@@ -51,14 +52,14 @@ def compare_accuracy_vs_round(metrics, legend):
     """Compare accuracy vs. round number across experiments."""
     visualization_utils.compare_accuracy_vs_round_number(
         metrics, legend, use_set=PLOT_SET, weighted=SHOW_WEIGHTED,
-        move_avg=PLOT_MOVE_AVG, window_size=4, plot_stds=False)
+        move_avg=PLOT_MOVE_AVG, window_size=WINDOW_SIZE, plot_stds=False)
 
 
 def compare_loss_vs_round(metrics, legend):
     """Compare loss vs. round number across experiments."""
     visualization_utils.compare_loss_vs_round_number(
         metrics, legend, use_set=PLOT_SET, weighted=SHOW_WEIGHTED,
-        move_avg=PLOT_MOVE_AVG, window_size=4, plot_stds=False)
+        move_avg=PLOT_MOVE_AVG, window_size=WINDOW_SIZE, plot_stds=False)
 
 
 if __name__ == "__main__":
