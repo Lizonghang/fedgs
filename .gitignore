@@ -111,5 +111,5 @@ venv.bak/
 # local test files
 logs/
 drawer.py
-metrics_stat_*
-metrics_sys_*
+metrics_stat*
+metrics_sys*
