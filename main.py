@@ -209,6 +209,7 @@ def get_clients_dist(
         clients: List of Client objects.
         display: Visualize data distribution when set to True.
         max_num_clients: Maximum number of clients to plot.
+        metrics_dir: Directory to save metrics files.
     Returns:
         global_dist: List of num samples for each class.
         global_train_dist: List of num samples for each class in train set.
@@ -296,6 +297,8 @@ def print_metrics(metrics, weights, prefix="", log_fp=None):
             with the metrics of that client.
         weights: Dict with client ids as keys. Each entry is the weight
             for that client.
+        prefix: String, "train_" or "test_".
+        log_fp: File pointer for logs.
     """
     ordered_weights = [weights[c] for c in sorted(weights)]
     metric_names = metrics_writer.get_metrics_names(metrics)

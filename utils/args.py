@@ -46,7 +46,7 @@ def parse_args():
                         type=int,
                         default=5)
     parser.add_argument("--num-syncs",
-                        help="number of synchronizations in each group;",
+                        help="number of local synchronizations in each group;",
                         type=int,
                         default=50)
     parser.add_argument("-lr",

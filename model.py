@@ -39,7 +39,7 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data_iter, my_round, lr_factor=0.985):
+    def train(self, data_iter, my_round, lr_factor=1.0):
         """
         Train the model using a batch of data.
         Args:
@@ -138,7 +138,11 @@ class Model(ABC):
         target_params = list(self.get_params())
         num_params = len(target_params)
         for p in range(num_params):
-            target_params[p].set_data(source_params[p].data())
+            if source_params:
+                data = source_params[p].data()
+            else:
+                data = nd.zeros(target_params[p].shape, ctx=self.ctx)
+            target_params[p].set_data(data)
 
     def get_params(self):
         """Return current model data.

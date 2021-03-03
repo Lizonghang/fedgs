@@ -575,6 +575,8 @@ def plot_clients_dist(clients=None,
         global_dist: List of num samples for each class.
         global_train_dist: List of num samples for each class in train set.
         global_test_dist: List of num samples for each class in test set.
+        draw_mean: Draw mean distribution of given clients.
+        metrics_dir: Directory to save metrics files.
     """
     plt.figure()
     plt.title("Data Distribution (%s Clients)" % len(clients),
@@ -588,9 +590,7 @@ def plot_clients_dist(clients=None,
     if clients is not None:
         num_classes = len(clients[0].train_sample_dist)
         class_list = range(num_classes)
-        c_ids = []
         for c in clients:
-            c_ids.append(c.id)
             c_train_dist_ = c.train_sample_dist
             c_train_dist_ = c_train_dist_ / c_train_dist_.sum()
             plt.plot(class_list, c_train_dist_, linestyle=":", linewidth=1)

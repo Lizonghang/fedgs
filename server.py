@@ -21,8 +21,8 @@ class Server(ABC):
                 random sampling.
             clients_per_group: Number of clients to select in
                 each group.
-            sampler: Sample method, could be "random", "approx_iid", and
-                "brute".
+            sampler: Sample method, could be "random", "approx_iid",
+                "brute", and "bayesian".
             base_dist: Real data distribution, usually global_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
