@@ -49,7 +49,6 @@ class Model(ABC):
             lr_factor: Decay factor for learning rate.
         Returns:
             comp: Number of FLOPs computed while training given data.
-                If --count-op is not set, FLOPs = 0 will be returned.
             update: Trained model params.
         """
         batched_x, batched_y = next(data_iter)

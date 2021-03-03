@@ -47,7 +47,7 @@ including:
 | --clients-per-group | 10 | integer | Number of clients trained per group. |
 | -sampler | random | random, brute, bayesian, approx_iid | Name of sampler to be used. |
 | --batch-size | 5 | integer | Number of training samples in each batch. |
-| --num-syncs | 50 | integer | Number of local epochs in each round. |
+| --num-syncs | 50 | integer | Number of synchronizations in each round. |
 | -lr| 0.01 | float | Learning rate for local optimizers. |
 | --seed | 0 | integer | Seed for random client sampling and batch splitting. |
 | --metrics-name | "metrics" | string | Name for metrics file. |

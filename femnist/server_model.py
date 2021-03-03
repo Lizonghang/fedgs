@@ -64,7 +64,7 @@ class ServerModel:
 
     def save(self, log_dir):
         """Saves the server model to:
-            {log_dir}/{self.model_name}.params
+            {log_dir}/{model_name}.params
         """
         self.net.save_parameters(
             os.path.join(log_dir, self.model_name + ".params"))

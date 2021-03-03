@@ -13,7 +13,7 @@ class Server(ABC):
         self.total_weight = 0
 
     @abstractmethod
-    def select_clients(self, my_round, clients_per_group, sample, base_dist,
+    def select_clients(self, my_round, clients_per_group, sampler, base_dist,
                        display, metrics_dir, rand_per_group):
         """Select clients_per_group clients from each group.
         Args:
@@ -21,9 +21,9 @@ class Server(ABC):
                 random sampling.
             clients_per_group: Number of clients to select in
                 each group.
-            sample: Sample method, could be "random", "approx_iid", and
+            sampler: Sample method, could be "random", "approx_iid", and
                 "brute".
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
             rand_per_group: Number of randomly sampled clients.
@@ -190,7 +190,7 @@ class MiddleServer(Server):
         num_sample_clients = min(clients_per_group, num_clients) \
                              - rand_per_group
 
-        # Randomly select half of num_clients clients
+        # Randomly select part of num_clients clients
         np.random.seed(my_round)
         rand_clients_idx = np.random.choice(
             range(num_clients), rand_per_group, replace=False)
@@ -224,7 +224,7 @@ class MiddleServer(Server):
             from metrics.visualization_utils import plot_clients_dist
 
             plot_clients_dist(clients=self.selected_clients,
-                              global_test_dist=base_dist,
+                              global_dist=base_dist,
                               draw_mean=True,
                               metrics_dir=metrics_dir)
 
@@ -239,7 +239,7 @@ class MiddleServer(Server):
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
             my_round: The current training round, used as random seed.
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             exist_clients: List of existing clients.
             num_iter: Number of iterations for sampling.
         Returns:
@@ -276,7 +276,7 @@ class MiddleServer(Server):
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             exist_clients: List of existing clients.
         Returns:
             approx_clients: List of sampled clients, which makes
@@ -291,7 +291,7 @@ class MiddleServer(Server):
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             exist_clients: List of existing clients.
         Returns:
             best_clients: List of sampled clients, which makes
@@ -329,7 +329,7 @@ class MiddleServer(Server):
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
             my_round: The current training round, used as random seed.
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             exist_clients: List of existing clients.
             init_points: Number of iterations before the explorations starts. Random
                 exploration can help by diversifying the exploration space.
@@ -390,7 +390,7 @@ class MiddleServer(Server):
         """Return distance of the base distribution and the mean distribution.
         Args:
             clients: List of sampled clients.
-            base_dist: Real data distribution, usually global_test_dist.
+            base_dist: Real data distribution, usually global_dist.
             use_distance: Distance metric to be used, could be:
                 ["l1", "l2", "cosine", "js", "wasserstein"].
         Returns:
@@ -445,10 +445,9 @@ class MiddleServer(Server):
         return s_sys_metrics, update
 
     def merge_updates(self, client_samples, update):
-        """Aggregate updates from clients based on the size
-        of batched data.
+        """Aggregate updates from clients based on train data size.
         Args:
-            client_samples: Size of batched data used by this client.
+            client_samples: Size of train data used by this client.
             update: The model trained by this client.
         """
         merged_update_ = list(self.merged_update.get_params())
