@@ -3,7 +3,7 @@ import visualization_utils
 SHOW_WEIGHTED = True  # show weighted accuracy instead of unweighted accuracy
 PLOT_CLIENTS = True
 PLOT_SET = "Test"  # "Test" or "Train"
-PLOT_MOVE_AVG = True
+PLOT_MOVE_AVG = False
 WINDOW_SIZE = 5
 stat_file = "metrics_stat.csv"  # change to None if desired
 sys_file = "metrics_sys.csv"  # change to None if desired
@@ -70,10 +70,10 @@ if __name__ == "__main__":
     # plot_comp_vs_round(*metrics)
     # calc_longest_flops(*metrics)
 
-    # stat_files = ("metrics_stat_9.csv", "metrics_stat_8.csv")
-    # legend = ("Exp 9", "Exp 8")
-    stat_files = ("metrics_stat_100.csv", "metrics_stat_101.csv")
-    legend = ("Exp 100", "Exp 101")
+    # stat_files = ("metrics_stat_12.csv", "metrics_stat_13.csv")
+    # legend = ("Exp 12", "Exp 13")
+    stat_files = ("metrics_stat_10.csv", "metrics_stat_11.csv")
+    legend = ("Exp 10", "Exp 11")
 
     metrics = [visualization_utils.load_data(f)[0]
                for f in stat_files]

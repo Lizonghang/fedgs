@@ -39,7 +39,7 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data_iter, my_round, lr_factor=1.0):
+    def train(self, data_iter, my_round, lr_factor=0.985):
         """
         Train the model using a batch of data.
         Args:
@@ -50,7 +50,7 @@ class Model(ABC):
         Returns:
             comp: Number of FLOPs computed while training given data.
                 If --count-op is not set, FLOPs = 0 will be returned.
-            update: The model after training given data.
+            update: Trained model params.
         """
         batched_x, batched_y = next(data_iter)
         input_data = self.preprocess_x(batched_x)
@@ -68,6 +68,7 @@ class Model(ABC):
             ls = self.loss(y_hats, target_data)
             ls.backward()
         self.trainer.step(num_samples)
+
         # Wait to avoid running out of GPU memory
         nd.waitall()
 
