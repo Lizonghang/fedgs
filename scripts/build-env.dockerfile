@@ -32,7 +32,7 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
         net-tools 
 
 # ==================================================================
-# miniconda python3.7
+# install miniconda
 # ------------------------------------------------------------------
 RUN curl -o ~/anaconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     chmod +x ~/anaconda.sh && \
@@ -41,10 +41,18 @@ RUN curl -o ~/anaconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-
 
 ENV PATH /opt/conda/bin:$PATH
 
-RUN conda install -y python=3.7 && \
-    conda update --all && \
+# ==================================================================
+# change sources and install python
+# ------------------------------------------------------------------
+RUN conda config --set show_channel_urls yes && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/ && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/ && \
     pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pip -U && \
     pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+RUN conda install -y python=3.7 && \
+    conda update --all
 
 # ==================================================================
 # install mxnet and utils
