@@ -113,3 +113,6 @@ logs/
 drawer.py
 metrics_stat*
 metrics_sys*
+
+# data files
+data/
