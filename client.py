@@ -60,46 +60,62 @@ class Client:
     @property
     def num_train_samples(self):
         """Return the number of train samples for this client."""
-        return len(self.train_data["y"])
+        if not hasattr(self, "_num_train_samples"):
+            self._num_train_samples = len(self.train_data["y"])
+
+        return self._num_train_samples
 
     @property
     def num_test_samples(self):
         """Return the number of test samples for this client."""
-        return len(self.test_data["y"])
+        if not hasattr(self, "_num_test_samples"):
+            self._num_test_samples = len(self.test_data["y"])
+
+        return self._num_test_samples
 
     @property
     def num_samples(self):
         """Return the number of train + test samples for this client."""
-        return self.num_train_samples + self.num_test_samples
+        if not hasattr(self, "_num_samples"):
+            self._num_samples = self.num_train_samples + self.num_test_samples
+
+        return self._num_samples
 
     @property
     def train_sample_dist(self):
         """Return the distribution of train data for this client."""
-        labels = self.train_data["y"]
-        labels = labels.asnumpy().astype("int64")
-        dist = np.bincount(labels)
-        # align to num_classes
-        num_classes = self.model.num_classes
-        dist = np.concatenate(
-            (dist, np.zeros(num_classes-len(dist))))
-        return dist
+        if not hasattr(self, "_train_sample_dist"):
+            labels = self.train_data["y"]
+            labels = labels.asnumpy().astype("int64")
+            dist = np.bincount(labels)
+            # align to num_classes
+            num_classes = self.model.num_classes
+            self._train_sample_dist = np.concatenate(
+                (dist, np.zeros(num_classes - len(dist))))
+
+        return self._train_sample_dist
 
     @property
     def test_sample_dist(self):
         """Return the distribution of test data for this client."""
-        labels = self.test_data["y"]
-        labels = labels.asnumpy().astype("int64")
-        dist = np.bincount(labels)
-        # align to num_classes
-        num_classes = self.model.num_classes
-        dist = np.concatenate(
-            (dist, np.zeros(num_classes-len(dist))))
-        return dist
+        if not hasattr(self, "_test_sample_dist"):
+            labels = self.test_data["y"]
+            labels = labels.asnumpy().astype("int64")
+            dist = np.bincount(labels)
+            # align to num_classes
+            num_classes = self.model.num_classes
+            self._test_sample_dist = np.concatenate(
+                (dist, np.zeros(num_classes - len(dist))))
+
+        return self._test_sample_dist
 
     @property
     def sample_dist(self):
         """Return the distribution of overall data for this client."""
-        return self.train_sample_dist + self.test_sample_dist
+        if not hasattr(self, "_sample_dist"):
+            self._sample_dist = self.train_sample_dist + self.test_sample_dist
+
+        return self._sample_dist
 
     @property
     def model(self):

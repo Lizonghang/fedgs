@@ -97,14 +97,19 @@ class Model(ABC):
         Returns:
             tot_size: Integer representing size of neural network (in bytes).
         """
-        params = self.net.collect_params().values()
-        tot_size = 0
-        for p in params:
-            tot_elems = self.__num_elems(p.shape)
-            dtype_size = np.dtype(p.dtype).itemsize
-            var_size = tot_elems * dtype_size
-            tot_size += var_size
-        return tot_size
+        if not hasattr(self, "_size"):
+            params = self.net.collect_params().values()
+            tot_size = 0
+
+            for p in params:
+                tot_elems = self.__num_elems(p.shape)
+                dtype_size = np.dtype(p.dtype).itemsize
+                var_size = tot_elems * dtype_size
+                tot_size += var_size
+
+            self._size = tot_size
+
+        return self._size
 
     def calc_flops(self):
         """Returns the number of flops needed to propagate a sample through the

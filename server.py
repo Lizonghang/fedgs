@@ -495,7 +495,10 @@ class MiddleServer(Server):
     def num_clients(self):
         """Return the number of all clients registered at this
         middle server."""
-        return len(self.clients)
+        if not hasattr(self, "_num_clients"):
+            self._num_clients = len(self.clients)
+
+        return self._num_clients
 
     @property
     def num_selected_clients(self):
@@ -505,37 +508,59 @@ class MiddleServer(Server):
     @property
     def num_samples(self):
         """Return the total number of samples for self.clients."""
-        return sum([c.num_samples for c in self.clients])
+        if not hasattr(self, "_num_samples"):
+            self._num_samples = sum([c.num_samples for c in self.clients])
+
+        return self._num_samples
 
     @property
     def num_train_samples(self):
         """Return the total number of train samples for
         self.clients."""
-        return sum([c.num_train_samples for c in self.clients])
+        if not hasattr(self, "_num_train_samples"):
+            self._num_train_samples = sum([c.num_train_samples
+                                           for c in self.clients])
+
+        return self._num_train_samples
 
     @property
     def num_test_samples(self):
         """Return the total number of test samples for
         self.clients."""
-        return sum([c.num_test_samples for c in self.clients])
+        if not hasattr(self, "_num_test_samples"):
+            self._num_test_samples = sum([c.num_test_samples
+                                          for c in self.clients])
+
+        return self._num_test_samples
 
     @property
     def train_sample_dist(self):
         """Return the distribution of train data for
         self.clients."""
-        return sum([c.train_sample_dist for c in self.clients])
+        if not hasattr(self, "_train_sample_dist"):
+            self._train_sample_dist = sum([c.train_sample_dist
+                                           for c in self.clients])
+
+        return self._train_sample_dist
 
     @property
     def test_sample_dist(self):
         """Return the distribution of test data for
         self.clients."""
-        return sum([c.test_sample_dist for c in self.clients])
+        if not hasattr(self, "_test_sample_dist"):
+            self._test_sample_dist = sum([c.test_sample_dist
+                                          for c in self.clients])
+
+        return self._test_sample_dist
 
     @property
     def sample_dist(self):
         """Return the distribution of overall data for
         self.clients."""
-        return self.train_sample_dist + self.test_sample_dist
+        if not hasattr(self, "_sample_dist"):
+            self._sample_dist = self.train_sample_dist + self.test_sample_dist
+
+        return self._sample_dist
 
     def brief(self, log_fp):
         """Briefly summarize the statistics of this middle server"""
