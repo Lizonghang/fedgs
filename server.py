@@ -204,7 +204,7 @@ class MiddleServer(Server):
                 rest_clients, num_sample_clients, my_round)
         elif sampler == "probability":
             sample_clients = self.probability_sampling(
-                rest_clients, num_sample_clients, my_round, base_dist, rand_clients, num_iter=10000)
+                rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
         elif sampler == "approx_iid":
             sample_clients = self.approximate_iid_sampling(
                 rest_clients, num_sample_clients, base_dist, rand_clients)
