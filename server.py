@@ -22,7 +22,7 @@ class Server(ABC):
             clients_per_group: Number of clients to select in
                 each group.
             sampler: Sample method, could be "random", "approx_iid",
-                "brute", and "bayesian".
+                "brute", "probability", and "bayesian".
             base_dist: Real data distribution, usually global_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
@@ -202,6 +202,9 @@ class MiddleServer(Server):
         if sampler == "random":
             sample_clients = self.random_sampling(
                 rest_clients, num_sample_clients, my_round)
+        elif sampler == "probability":
+            sample_clients = self.probability_sampling(
+                rest_clients, num_sample_clients, my_round, base_dist, rand_clients, num_iter=10000)
         elif sampler == "approx_iid":
             sample_clients = self.approximate_iid_sampling(
                 rest_clients, num_sample_clients, base_dist, rand_clients)
@@ -268,6 +271,47 @@ class MiddleServer(Server):
                     rand_clients_[:] = rand_clients_tmp_
 
                 num_iter -= 1
+
+        return rand_clients_
+
+    def probability_sampling(self, clients, num_clients, my_round, base_dist=None,
+                             exist_clients=None, num_iter=10000):
+        """Randomly sample num_clients clients from given clients, according
+        to real-time learning probability.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            my_round: The current training round, used as random seed.
+            base_dist: Real data distribution, usually global_dist.
+            exist_clients: List of existing clients.
+            num_iter: Number of iterations for sampling.
+        Returns:
+            rand_clients: List of sampled clients.
+        """
+        assert num_iter > 1, "Invalid num_iter=%s (num_iter>1)" % num_iter
+
+        np.random.seed(my_round)
+        min_distance_ = 1
+        rand_clients_ = []
+        prob_ = np.array([1. / len(clients)] * len(clients))
+
+        while num_iter > 0:
+            rand_clients_idx_ = np.random.choice(
+                range(len(clients)), num_clients, p=prob_, replace=False)
+            rand_clients_tmp_ = np.take(clients, rand_clients_idx_).tolist()
+
+            all_clients_ = exist_clients + rand_clients_tmp_
+            distance_ = self.get_dist_distance(all_clients_, base_dist)
+
+            if distance_ < min_distance_:
+                min_distance_ = distance_
+                rand_clients_[:] = rand_clients_tmp_
+
+                # update probability of sampled clients
+                prob_[rand_clients_idx_] += 1. / len(clients)
+                prob_ /= prob_.sum()
+
+            num_iter -= 1
 
         return rand_clients_
 
