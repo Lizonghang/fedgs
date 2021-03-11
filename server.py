@@ -22,7 +22,8 @@ class Server(ABC):
             clients_per_group: Number of clients to select in
                 each group.
             sampler: Sample method, could be "random", "approx_iid",
-                "brute", "probability", and "bayesian".
+                "brute", "probability", "bayesian", and "ga" ("ga"
+                namely genetic algorithm).
             base_dist: Real data distribution, usually global_dist.
             display: Visualize data distribution when set to True.
             metrics_dir: Directory to save metrics files.
@@ -201,7 +202,7 @@ class MiddleServer(Server):
         rest_clients = np.delete(online_clients, rand_clients_idx).tolist()
         if sampler == "random":
             sample_clients = self.random_sampling(
-                rest_clients, num_sample_clients, my_round)
+                rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
         elif sampler == "probability":
             sample_clients = self.probability_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
@@ -213,6 +214,9 @@ class MiddleServer(Server):
                 rest_clients, num_sample_clients, base_dist, rand_clients)
         elif sampler == "bayesian":
             sample_clients = self.bayesian_sampling(
+                rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
+        elif sampler == "ga":
+            sample_clients = self.genetic_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
 
         self.selected_clients = rand_clients + sample_clients
@@ -236,7 +240,7 @@ class MiddleServer(Server):
         return self.selected_clients, info
 
     def random_sampling(self, clients, num_clients, my_round, base_dist=None,
-                        exist_clients=None, num_iter=1):
+                        exist_clients=[], num_iter=1):
         """Randomly sample num_clients clients from given clients.
         Args:
             clients: List of clients to be sampled.
@@ -274,8 +278,8 @@ class MiddleServer(Server):
 
         return rand_clients_
 
-    def probability_sampling(self, clients, num_clients, my_round, base_dist=None,
-                             exist_clients=None, num_iter=10000):
+    def probability_sampling(self, clients, num_clients, my_round, base_dist,
+                             exist_clients=[], num_iter=100):
         """Randomly sample num_clients clients from given clients, according
         to real-time learning probability.
         Args:
@@ -330,7 +334,7 @@ class MiddleServer(Server):
         approx_clients_ = clients[:num_clients]
         return approx_clients_
 
-    def brute_sampling(self, clients, num_clients, base_dist, exist_clients):
+    def brute_sampling(self, clients, num_clients, base_dist, exist_clients=[]):
         """Brute search all possible combinations to find best clients.
         Args:
             clients: List of clients to be sampled.
@@ -347,12 +351,14 @@ class MiddleServer(Server):
 
         def recursive_combine(
                 clients_, start, num_clients_, best_clients_, min_distance_):
+
             if num_clients_ == 0:
                 all_clients_ = exist_clients + clients_tmp_
                 distance_ = self.get_dist_distance(all_clients_, base_dist)
                 if distance_ < min_distance_[0]:
                     best_clients_[:] = clients_tmp_
                     min_distance_[0] = distance_
+
             elif num_clients_ > 0:
                 for i in range(start, len(clients_) - num_clients_ + 1):
                     clients_tmp_.append(clients_[i])
@@ -365,7 +371,7 @@ class MiddleServer(Server):
         return best_clients_
 
     def bayesian_sampling(self, clients, num_clients, my_round, base_dist,
-                          exist_clients, init_points=5, n_iter=25, verbose=0):
+                          exist_clients=[], init_points=5, n_iter=25, verbose=0):
         """Search for an approximate optimal solution using bayesian optimization.
         Please refer to the link below for more details.
             https://github.com/fmfn/BayesianOptimization
@@ -428,6 +434,55 @@ class MiddleServer(Server):
         optimal_params = optimizer.max["params"]
         c_idx_ = get_indexes_(**optimal_params)
         approx_clients_ = np.take(clients, c_idx_).tolist()
+        return approx_clients_
+
+    def genetic_sampling(self, clients, num_clients, my_round, base_dist,
+                         exist_clients=[], num_iter=100, size_pop=100,
+                         prob_mutation=0.001):
+        """Search for an approximate optimal solution using genetic algorithm.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            my_round: The current training round, used as random seed.
+            base_dist: Real data distribution, usually global_dist.
+            exist_clients: List of existing clients.
+            num_iter: Number of iterations for sampling.
+        Returns:
+            rand_clients: List of sampled clients.
+        """
+        from opt.genetic_algorithm import GeneticAlgorithm
+
+        assert size_pop >= 50, \
+            "We recommend setting pop_size > 100 to avoid the absence " \
+            "of feasible solutions."
+
+        def distance_blackbox_(X):
+            arr = []
+
+            # Get clients and calculate distances
+            for x in X:
+                c_idx_, = np.where(x == 1)
+                sample_clients_ = np.take(clients, c_idx_).tolist()
+                all_clients_ = exist_clients + sample_clients_
+                distance = self.get_dist_distance(all_clients_, base_dist)
+                arr.append(distance)
+
+            return np.array(arr)
+
+        ga = GeneticAlgorithm(
+            func=distance_blackbox_,
+            n_dim=len(clients),
+            n_select=num_clients,
+            size_pop=size_pop,
+            max_iter=num_iter,
+            prob_mutation=prob_mutation,
+            seed=my_round
+        )
+
+        best_x, best_y = ga.fit()
+        best_c_idx_, = np.where(best_x == 1)
+
+        approx_clients_ = np.take(clients, best_c_idx_).tolist()
         return approx_clients_
 
     def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
