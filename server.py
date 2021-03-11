@@ -447,6 +447,8 @@ class MiddleServer(Server):
             base_dist: Real data distribution, usually global_dist.
             exist_clients: List of existing clients.
             num_iter: Number of iterations for sampling.
+            size_pop: Size of population.
+            prob_mutation: Probability of mutation.
         Returns:
             rand_clients: List of sampled clients.
         """
