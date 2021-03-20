@@ -25,9 +25,9 @@ def batch_data(data, batch_size, seed):
     while True:
         # randomly shuffle data
         mx.random.seed(seed + epochs)
-        mx.random.shuffle(data_x)
+        data_x = mx.random.shuffle(data_x)
         mx.random.seed(seed + epochs)
-        mx.random.shuffle(data_y)
+        data_y = mx.random.shuffle(data_y)
 
         # loop through mini-batches
         for i in range(0, len(data_x), batch_size):
