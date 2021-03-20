@@ -1,7 +1,7 @@
 import argparse
 
 DATASETS = ["sent140", "femnist", "shakespeare", "celeba", "synthetic", "reddit"]
-SAMPLERS = ["random", "brute", "approx_iid", "bayesian", "probability", "ga"]
+SAMPLERS = ["random", "brute", "bayesian", "probability", "ga"]
 
 
 def parse_args():
@@ -32,10 +32,6 @@ def parse_args():
                         help="number of clients trained per group;",
                         type=int,
                         default=10)
-    parser.add_argument("--rand-per-group",
-                        help="number of randomly sampled clients per group;",
-                        type=int,
-                        default=2)
     parser.add_argument("-sampler",
                         help="name of sampler to be used;",
                         type=str,

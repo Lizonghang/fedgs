@@ -4,7 +4,6 @@ import importlib
 import mxnet as mx
 from mxnet import nd, init
 from collections import defaultdict
-
 from baseline_constants import INPUT_SIZE
 
 
@@ -21,29 +20,65 @@ def batch_data(data, batch_size, seed):
     data_x = data["x"]
     data_y = data["y"]
 
-    epochs = 0
+    # Backup data, used to fill one batch of data
+    data_x_bak_ = None
+    data_y_bak_ = None
+
+    l = 0
+    num_epochs = 0
     while True:
+
         # randomly shuffle data
-        mx.random.seed(seed + epochs)
-        mx.random.shuffle(data_x)
-        mx.random.seed(seed + epochs)
-        mx.random.shuffle(data_y)
+        mx.random.seed(seed + num_epochs)
+        data_x = mx.random.shuffle(data_x)
+        mx.random.seed(seed + num_epochs)
+        data_y = mx.random.shuffle(data_y)
 
         # loop through mini-batches
-        for i in range(0, len(data_x), batch_size):
-            l = i
-            r = min(i + batch_size, len(data_y))
-            batched_x = data_x[l:r]
-            batched_y = data_y[l:r]
-            yield batched_x, batched_y
+        while l < len(data_x):
 
-        epochs += 1
+            # Fill one batch of data
+            if data_x_bak_ is not None \
+                    and data_y_bak_ is not None:
+                r = l + batch_size - len(data_y_bak_)
+
+                batch_x = nd.concatenate([data_x_bak_, data_x[l:r]])
+                batch_y = nd.concatenate([data_y_bak_, data_y[l:r]])
+                assert len(batch_y) == batch_size
+
+                yield batch_x, batch_y
+
+                data_x_bak_ = None
+                data_y_bak_ = None
+                l = r
+                continue
+
+            r = min(l + batch_size, len(data_y))
+
+            # Rest samples are not enough, backup rest samples
+            if r - l < batch_size:
+                data_x_bak_ = data_x[l:r]
+                data_y_bak_ = data_y[l:r]
+                l = 0
+                break
+
+            batch_x = data_x[l:r]
+            batch_y = data_y[l:r]
+            assert len(batch_y) == batch_size
+
+            yield batch_x, batch_y
+
+            l += batch_size
+            if l == len(data_x):
+                l = 0
+
+        num_epochs += 1
 
 
 def read_dir(data_dir):
     clients = []
     groups = []
-    data = defaultdict(lambda : None)
+    data = defaultdict(lambda: None)
 
     files = os.listdir(data_dir)
     files = [f for f in files if f.endswith(".json")]

@@ -3,7 +3,6 @@ import numpy as np
 import os
 import random
 import mxnet as mx
-
 import metrics.writer as metrics_writer
 
 from client import Client
@@ -15,9 +14,7 @@ from utils.model_utils import read_data
 
 def main():
     args = parse_args()
-    num_rounds = args.num_rounds
-    eval_every = args.eval_every
-    clients_per_group = args.clients_per_group
+
     ctx = mx.gpu(args.ctx) if args.ctx >= 0 else mx.cpu()
 
     log_dir = os.path.join(
@@ -82,7 +79,7 @@ def main():
 
     # Measure the global data distribution
     global_dist, _, _ = get_clients_dist(
-        clients, display=True, max_num_clients=20, metrics_dir=args.metrics_dir)
+        clients, display=False, max_num_clients=20, metrics_dir=args.metrics_dir)
 
     # Create middle servers
     middle_servers = setup_middle_servers(
@@ -100,30 +97,21 @@ def main():
           file=log_fp, flush=True)
     stat_writer_fn = get_stat_writer_function(
         client_ids, client_groups, client_num_samples, args)
-    sys_writer_fn = get_sys_writer_function(args)
     print_stats(
         0, top_server, client_num_samples, stat_writer_fn,
         args.use_val_set, log_fp)
 
     # Training simulation
-    for r in range(1, num_rounds + 1):
-        # Select clients
-        top_server.select_clients(
-            r, clients_per_group, args.sampler, global_dist, display=False,
-            metrics_dir=args.metrics_dir, rand_per_group=args.rand_per_group)
-        _ = get_clients_info(top_server.selected_clients)
-        c_ids, c_groups, c_num_samples = _
-
-        print("--- Round %d of %d: Training %d clients ---"
-              % (r, num_rounds, len(c_ids)),
+    for r in range(1, args.num_rounds+1):
+        print("--- Round %d of %d ---" % (r, args.num_rounds),
               file=log_fp, flush=True)
 
-        # Simulate server model training on selected clients' data
-        sys_metrics = top_server.train_model(r, args.num_syncs)
-        sys_writer_fn(r, c_ids, sys_metrics, c_groups, c_num_samples)
+        # Simulate training on selected clients
+        top_server.train_model(
+            r, args.num_syncs, args.clients_per_group, args.sampler, global_dist)
 
         # Test model
-        if r % eval_every == 0 or r == num_rounds:
+        if r % args.eval_every == 0 or r == args.num_rounds:
             print_stats(
                 r, top_server, client_num_samples, stat_writer_fn,
                 args.use_val_set, log_fp)
@@ -267,21 +255,11 @@ def get_stat_writer_function(ids, groups, num_samples, args):
     return writer_fn
 
 
-def get_sys_writer_function(args):
-    def writer_fn(num_round, ids, metrics, groups, num_samples):
-        metrics_writer.print_metrics(
-            num_round, ids, metrics, groups, num_samples,
-            "train", args.metrics_dir, "{}_{}_{}".format(
-                args.metrics_name, "sys", args.log_rank))
-
-    return writer_fn
-
-
 def print_stats(num_round, server, num_samples, writer, use_val_set, log_fp=None):
-    train_stat_metrics = server.test_model(set_to_use="train")
-    print_metrics(
-        train_stat_metrics, num_samples, prefix="train_", log_fp=log_fp)
-    writer(num_round, train_stat_metrics, "train")
+    # train_stat_metrics = server.test_model(set_to_use="train")
+    # print_metrics(
+    #     train_stat_metrics, num_samples, prefix="train_", log_fp=log_fp)
+    # writer(num_round, train_stat_metrics, "train")
 
     eval_set = "test" if not use_val_set else "val"
     test_stat_metrics = server.test_model(set_to_use=eval_set)

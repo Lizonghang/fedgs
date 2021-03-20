@@ -588,18 +588,18 @@ def plot_clients_dist(clients=None,
 
     # plot clients' data distribution if given
     if clients is not None:
-        num_classes = len(clients[0].train_sample_dist)
+        num_classes = len(clients[0].next_train_batch_dist)
         class_list = range(num_classes)
         for c in clients:
-            c_train_dist_ = c.train_sample_dist
+            c_train_dist_ = c.next_train_batch_dist
             c_train_dist_ = c_train_dist_ / c_train_dist_.sum()
             plt.plot(class_list, c_train_dist_, linestyle=":", linewidth=1)
 
     p0 = None
     if draw_mean and clients is not None:
-        num_classes = len(clients[0].train_sample_dist)
+        num_classes = len(clients[0].next_train_batch_dist)
         class_list = range(num_classes)
-        c_mean_dist_ = sum([c.train_sample_dist for c in clients])
+        c_mean_dist_ = sum([c.next_train_batch_dist for c in clients])
         c_mean_dist_ = c_mean_dist_ / c_mean_dist_.sum()
         p0, = plt.plot(
             class_list, c_mean_dist_, linestyle="--", linewidth=2, c="g")

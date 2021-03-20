@@ -39,11 +39,12 @@ class Model(ABC):
         """
         return None, None, None
 
-    def train(self, data_iter, my_round, lr_factor=1.0):
+    def train(self, batch_x, batch_y, my_round, lr_factor=1.0):
         """
         Train the model using a batch of data.
         Args:
-            data_iter: An iterator to generate batches of train data.
+            batch_x: A batch of train data.
+            batch_y: Labels for the batch data.
             my_round: The current training round, used for learning rate
                 decay.
             lr_factor: Decay factor for learning rate.
@@ -51,10 +52,9 @@ class Model(ABC):
             comp: Number of FLOPs computed while training given data.
             update: Trained model params.
         """
-        batched_x, batched_y = next(data_iter)
-        input_data = self.preprocess_x(batched_x)
-        target_data = self.preprocess_y(batched_y)
-        num_samples = len(batched_y)
+        input_data = self.preprocess_x(batch_x)
+        target_data = self.preprocess_y(batch_y)
+        num_samples = len(batch_y)
 
         # Decay learning rate
         self.trainer.set_learning_rate(
@@ -73,7 +73,7 @@ class Model(ABC):
 
         update = self.get_params()
         comp = num_samples * self.flops_per_sample
-        return comp, update
+        return comp, num_samples, update
 
     def __num_elems(self, shape):
         """Returns the number of elements in the given shape.

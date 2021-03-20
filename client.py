@@ -7,7 +7,8 @@ from utils.model_utils import batch_data
 
 class Client:
 
-    def __init__(self, seed, client_id, group, train_data, test_data, model, batch_size):
+    def __init__(self, seed, client_id, group, train_data,
+                 test_data, model, batch_size):
         self.seed = seed
         self.id = client_id
         self.group = group
@@ -20,8 +21,9 @@ class Client:
             "x": self.process_data(test_data["x"]),
             "y": self.process_data(test_data["y"])
         }
-        self.train_data_iter = batch_data(
+        self.batch_iter = batch_data(
             self.train_data, batch_size, seed=self.seed)
+        self.next_batch_x, self.next_batch_y = next(self.batch_iter)
 
     def train(self, my_round):
         """Trains on self.model using one batch of train_data.
@@ -30,11 +32,16 @@ class Client:
                 decay.
         Returns:
             comp: Number of FLOPs executed in training process.
-            num_samples: Number of train samples on this client.
+            num_samples: Number of trained batch samples on this client.
             update: Trained model params.
         """
-        comp, update = self.model.train(self.train_data_iter, my_round)
-        return comp, self.num_train_samples, update
+        comp, num_samples, update = self.model.train(
+            self.next_batch_x, self.next_batch_y, my_round)
+
+        # Prepare data for next synchronization
+        self.next_batch_x, self.next_batch_y = next(self.batch_iter)
+
+        return comp, num_samples, update
 
     def test(self, set_to_use="test"):
         """Tests self.model on self.test_data.
@@ -94,6 +101,17 @@ class Client:
                 (dist, np.zeros(num_classes - len(dist))))
 
         return self._train_sample_dist
+
+    @property
+    def next_train_batch_dist(self):
+        """Return the distribution of next batch data for this client."""
+        next_labels = self.next_batch_y.asnumpy().astype("int64")
+        next_dist = np.bincount(next_labels)
+        # align to num_classes
+        num_classes = self.model.num_classes
+        next_dist = np.concatenate(
+            (next_dist, np.zeros(num_classes - len(next_dist))))
+        return next_dist
 
     @property
     def test_sample_dist(self):
