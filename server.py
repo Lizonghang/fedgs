@@ -136,7 +136,7 @@ class MiddleServer(Server):
         self.clients.extend(clients)
 
     def select_clients(self, my_round, clients_per_group, sampler="random",
-                       base_dist=None, display=True, metrics_dir="metrics",
+                       base_dist=None, display=False, metrics_dir="metrics",
                        rand_per_group=2):
         """Randomly select clients_per_group clients for this round."""
         online_clients = self.online(self.clients)
