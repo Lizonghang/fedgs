@@ -377,7 +377,8 @@ def compare_accuracy_vs_round_number(
     plt.ylabel("%s Accuracy" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    plt.ylim(bottom=0.6)
+    plt.xlim((60, 500))
+    plt.ylim((0.7, 0.87))
     _set_plot_properties(kwargs)
     plt.show()
 
@@ -433,7 +434,8 @@ def compare_loss_vs_round_number(
     plt.ylabel("%s Loss" % use_set, fontsize=label_fontsize)
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
-    plt.ylim(top=1.5)
+    plt.xlim((80, 500))
+    plt.ylim((0.4, 0.8))
     _set_plot_properties(kwargs)
     plt.show()
 
@@ -639,3 +641,4 @@ def plot_clients_dist(clients=None,
 
     plt.legend(*l, fontsize=10)
     plt.savefig(os.path.join(metrics_dir, "dist.png"))
+    plt.close()

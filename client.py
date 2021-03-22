@@ -24,6 +24,7 @@ class Client:
         self.batch_iter = batch_data(
             self.train_data, batch_size, seed=self.seed)
         self.next_batch_x, self.next_batch_y = next(self.batch_iter)
+        self.batch_updated = True
 
     def train(self, my_round):
         """Trains on self.model using one batch of train_data.
@@ -40,6 +41,7 @@ class Client:
 
         # Prepare data for next synchronization
         self.next_batch_x, self.next_batch_y = next(self.batch_iter)
+        self.batch_updated = True
 
         return comp, num_samples, update
 
@@ -105,13 +107,16 @@ class Client:
     @property
     def next_train_batch_dist(self):
         """Return the distribution of next batch data for this client."""
-        next_labels = self.next_batch_y.asnumpy().astype("int64")
-        next_dist = np.bincount(next_labels)
-        # align to num_classes
-        num_classes = self.model.num_classes
-        next_dist = np.concatenate(
-            (next_dist, np.zeros(num_classes - len(next_dist))))
-        return next_dist
+        if self.batch_updated:
+            next_labels = self.next_batch_y.asnumpy().astype("int64")
+            next_dist = np.bincount(next_labels)
+            # align to num_classes
+            num_classes = self.model.num_classes
+            self._next_train_batch_dist = np.concatenate(
+                (next_dist, np.zeros(num_classes - len(next_dist))))
+            self.batch_updated = False
+
+        return self._next_train_batch_dist
 
     @property
     def test_sample_dist(self):

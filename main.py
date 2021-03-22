@@ -256,10 +256,10 @@ def get_stat_writer_function(ids, groups, num_samples, args):
 
 
 def print_stats(num_round, server, num_samples, writer, use_val_set, log_fp=None):
-    # train_stat_metrics = server.test_model(set_to_use="train")
-    # print_metrics(
-    #     train_stat_metrics, num_samples, prefix="train_", log_fp=log_fp)
-    # writer(num_round, train_stat_metrics, "train")
+    train_stat_metrics = server.test_model(set_to_use="train")
+    print_metrics(
+        train_stat_metrics, num_samples, prefix="train_", log_fp=log_fp)
+    writer(num_round, train_stat_metrics, "train")
 
     eval_set = "test" if not use_val_set else "val"
     test_stat_metrics = server.test_model(set_to_use=eval_set)

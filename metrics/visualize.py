@@ -70,8 +70,8 @@ if __name__ == "__main__":
     # plot_comp_vs_round(*metrics)
     # calc_longest_flops(*metrics)
 
-    stat_files = ("metrics_stat_1.csv", "metrics_stat_2.csv")
-    legend = ("Exp 1", "Exp 2")
+    stat_files = ("metrics_stat_15.csv", "metrics_stat_16.csv")
+    legend = ("Random", "MultiRandom")
 
     metrics = [visualization_utils.load_data(f)[0]
                for f in stat_files]
