@@ -203,6 +203,9 @@ class MiddleServer(Server):
         if sampler == "random":
             sample_clients = self.random_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
+        elif sampler == "fmincon":
+            sample_clients = self.fmincon_sampling(
+                num_sample_clients, rest_clients, rand_clients, 5, base_dist)
         elif sampler == "probability":
             sample_clients = self.probability_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
