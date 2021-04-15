@@ -333,6 +333,36 @@ class MiddleServer(Server):
         print("MP INV")
         approx_clients_ = clients[:num_clients]
         return approx_clients_
+    
+    def fmincon_sampling(self, num_clients, clients, exist_clients, constant, base_dist):
+        """Search best clients with fmincon
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            exist_clients: List of exising clients.
+            constant: Number of choices per segment.
+            base_dist: Real data distribution, usually global_dist.
+        Returns:
+            fmincon_res: List of sampled clients.
+        """
+        temp = (0, 1)
+        size = clients.shape[1]
+        bnds = []
+        x0 = [0.5] * size
+        fmincon_res = []
+        for i in range(size):
+            bnds.append(temp)
+        cons = ({'type': 'eq', 'fun': lambda x: sum(x) - num_clients})
+        fun = lambda x: np.linalg.norm(np.dot(clients, np.transpose(x)) + exist_clients \
+                                       - num_clients * constant * np.transpose(base_dist))
+
+        res = scipy.optimize.minimize(fun, x0, method='SLSQP', bounds=bnds, constraints=cons)
+        x_ = res.x
+        for fmin_index in range(len(x_)):
+            if x_[fmin_index] >= 0.5:
+                fmincon_res.append(np.take(clients,fmin_index,1).tolist())
+
+        return fmincon_res
 
     def brute_sampling(self, clients, num_clients, base_dist, exist_clients=[]):
         """Brute search all possible combinations to find best clients.
