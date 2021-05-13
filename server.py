@@ -301,7 +301,7 @@ class MiddleServer(Server):
         clients_ = []
         exist_clients_ = []
         fmincon_res = []
-        #print("clients+exist",clients+exist_clients)
+        
         for i in range(size):
             bnds.append(temp)
         cons = ({'type': 'eq', 'fun': lambda x: sum(x) - num_clients})
@@ -313,9 +313,7 @@ class MiddleServer(Server):
         res = scipy.optimize.minimize(fun, x0, method='SLSQP', bounds=bnds, constraints=cons)
 
         x_ = res.x
-        print("x_",x_)
-
-
+        #print("x_",x_)
         for fmin_index in range(len(x_)):
             if x_[fmin_index] >= 0.5:
                 fmincon_index.append(fmin_index)
@@ -323,9 +321,8 @@ class MiddleServer(Server):
                 fmincon_res = np.take(clients,fmincon_index).tolist()
             else:
                 x_[fmin_index] = 0
-        print("distribution",np.linalg.norm(np.dot(x_,np.array(clients_)).sum(axis=0) + np.array(exist_clients_).sum(axis=0)-num_clients*constant*np.array(base_dist)))
-
-        print("fmincon", fmincon_res)
+                
+        #print("fmincon", fmincon_res)
         return fmincon_res
 
     def probability_sampling(self, clients, num_clients, my_round, base_dist,
