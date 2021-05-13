@@ -22,7 +22,7 @@ class Server(ABC):
             clients_per_group: Number of clients to select in
                 each group.
             sampler: Sample method, could be "random", "approx_iid",
-                "brute", "probability", "bayesian", and "ga" ("ga"
+                "brute", "probability", "bayesian", "fmincon" and "ga" ("ga"
                 namely genetic algorithm).
             base_dist: Real data distribution, usually global_dist.
             display: Visualize data distribution when set to True.
@@ -280,6 +280,53 @@ class MiddleServer(Server):
                 num_iter -= 1
 
         return rand_clients_
+    def fmincon_sampling(self, num_clients, clients, base_dist, exist_clients=[], constant = 5 ):
+        """Search best clients with fmincon
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            exist_clients: List of existing clients.
+            constant: Number of choices per segment.
+            base_dist: Real data distribution, usually global_dist.
+        Returns:
+            fmincon_res: List of sampled clients.
+        """
+
+        temp = (0, 1)
+        size = len(clients)
+
+        bnds = []
+        fmincon_index = []
+        x0 = [0.5] * size
+        clients_ = []
+        exist_clients_ = []
+        fmincon_res = []
+        #print("clients+exist",clients+exist_clients)
+        for i in range(size):
+            bnds.append(temp)
+        cons = ({'type': 'eq', 'fun': lambda x: sum(x) - num_clients})
+
+        clients_.append([c.train_sample_dist for c in clients])
+        exist_clients_.append([d.train_sample_dist for d in exist_clients])
+
+        fun = lambda x: np.linalg.norm(np.dot(x,np.array(clients_)).sum(axis=0) + np.array(exist_clients_).sum(axis=0)-num_clients*constant*np.array(base_dist))
+        res = scipy.optimize.minimize(fun, x0, method='SLSQP', bounds=bnds, constraints=cons)
+
+        x_ = res.x
+        print("x_",x_)
+
+
+        for fmin_index in range(len(x_)):
+            if x_[fmin_index] >= 0.5:
+                fmincon_index.append(fmin_index)
+                x_[fmin_index] = 1
+                fmincon_res = np.take(clients,fmincon_index).tolist()
+            else:
+                x_[fmin_index] = 0
+        print("distribution",np.linalg.norm(np.dot(x_,np.array(clients_)).sum(axis=0) + np.array(exist_clients_).sum(axis=0)-num_clients*constant*np.array(base_dist)))
+
+        print("fmincon", fmincon_res)
+        return fmincon_res
 
     def probability_sampling(self, clients, num_clients, my_round, base_dist,
                              exist_clients=[], num_iter=100):
