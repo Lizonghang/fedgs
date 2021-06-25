@@ -1,7 +1,7 @@
 import argparse
 
 DATASETS = ["sent140", "femnist", "shakespeare", "celeba", "synthetic", "reddit"]
-SAMPLERS = ["random", "brute", "bayesian", "probability", "ga"]
+SAMPLERS = ["random", "brute", "bayesian", "probability", "ga", "sgdd"]
 
 
 def parse_args():

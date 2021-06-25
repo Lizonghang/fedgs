@@ -8,8 +8,8 @@ import numpy as np
 import os
 import pandas as pd
 import sys
-
 from decimal import Decimal
+from matplotlib import cm
 
 models_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(models_dir)
@@ -27,7 +27,10 @@ title_fontsize = 14
 legend_fontsize = 13
 label_fontsize = 14
 tick_fontsize = 13
+text_fontsize = 12
 
+colors = ("m", "orange", "b", "gray", "g", "purple", "pink")
+hatches = ("x", "/", "\\", "-")
 
 def load_data(stat_metrics_file, sys_metrics_file=None):
     """Loads the data from the given stat_metric and sys_metric files."""
@@ -580,7 +583,7 @@ def plot_clients_dist(clients=None,
         draw_mean: Draw mean distribution of given clients.
         metrics_dir: Directory to save metrics files.
     """
-    plt.figure()
+    plt.figure(figsize=(7, 5))
     plt.title("Data Distribution (%s Clients)" % len(clients),
               fontsize=title_fontsize)
     plt.xlabel("Class", fontsize=label_fontsize)
@@ -639,6 +642,207 @@ def plot_clients_dist(clients=None,
     if p2: l[0].append(p2); l[1].append("global test dist");
     if p3: l[0].append(p3); l[1].append("global dist");
 
-    plt.legend(*l, fontsize=10)
+    plt.legend(*l, fontsize=12)
     plt.savefig(os.path.join(metrics_dir, "dist.png"))
     plt.close()
+
+
+def compare_execution_time(samplers, exec_time):
+    """Plot execution time bars.
+        Args:
+            samplers: List of samplers used.
+            exec_time: Execution Time for each sampler.
+    """
+    from brokenaxes import brokenaxes
+
+    plt.figure()
+
+    bax = brokenaxes(ylims=((0, 8), (977, 980)), hspace=.3, despine=False)
+    title = "Execution Time of SGDD and Other Samplers"
+    bax.set_title(title, fontsize=title_fontsize)
+    bax.set_xlabel("Sampler", fontsize=label_fontsize)
+    bax.set_ylabel("Execution Time (s)", fontsize=label_fontsize)
+
+    for i in range(len(samplers)):
+        bax.bar(x=samplers[i], height=exec_time[i], align="center",
+                color="w", edgecolor=colors[i], hatch=hatches[1])
+        bax.text(x=samplers[i], y=exec_time[i]+0.4, s=exec_time[i],
+                 size=text_fontsize, horizontalalignment="center")
+
+    plt.show()
+
+
+def compare_distribution_divergence(samplers, dist_info):
+    """Plot the distribution divergence.
+    Args:
+        samplers: List of samplers used.
+        dist_info: Information of distribution divergence, including:
+            mean, median, std, max and min.
+    """
+    plt.figure()
+
+    title = "Distribution Divergence of SGDD and Other Samplers"
+    plt.title(title, fontsize=title_fontsize)
+    plt.xlabel("Sampler", fontsize=label_fontsize)
+    plt.ylabel("Distribution Divergence (L2)", fontsize=label_fontsize)
+    plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
+    plt.ylim((0, 0.112))
+
+    for i in range(len(samplers)):
+        mean_val_ = dist_info["mean"][i]
+        max_val_ = dist_info["max"][i]
+        min_val_ = dist_info["min"][i]
+        # Draw mean bars
+        plt.bar(x=samplers[i], height=mean_val_, align="center",
+                # yerr=dist_info["std"][i],
+                # error_kw=dict(elinewidth=1, ecolor=colors[i], capsize=5),
+                color="w", edgecolor=colors[i])
+        # Draw min and max error lines
+        plt.plot((i-0.1, i+0.1), (max_val_, max_val_), color=colors[i])
+        plt.plot((i-0.1, i+0.1), (min_val_, min_val_), color=colors[i])
+        plt.plot((i, i), (min_val_, max_val_), color=colors[i])
+        # Draw texts
+        plt.text(x=i, y=min_val_-0.005, s=min_val_,
+                 color=colors[i], horizontalalignment="center")
+        plt.text(x=i, y=max_val_+0.002, s=max_val_,
+                 color=colors[i], horizontalalignment="center")
+
+    plt.show()
+
+
+def compare_sampler_optim_curve(samplers, dist_info):
+    """Plot the distance optimization curves.
+    Args:
+        samplers: List of samplers used.
+        dist_info: Information of distance history of given samplers.
+    """
+    from brokenaxes import brokenaxes
+
+    plt.figure(figsize=(7, 5))
+
+    bax = brokenaxes(xlims=((0.001, 0.015), (0.018, 1), (1.01, 8), (11, 979)),
+                     width_ratios=[0.1, 0.1, 0.1, 0.1],
+                     wspace=0, despine=False, d=0)
+    title = "Distance Optimization Curves of SGDD and Other Samplers"
+    bax.set_title(title, fontsize=title_fontsize)
+    bax.set_xlabel("Time (s)", fontsize=label_fontsize)
+    bax.set_ylabel("L2 Distance", fontsize=label_fontsize)
+    plt.xticks([0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75],
+               [0, 0.007, 0.015, 0.5, 1, 4.5, 8])
+
+    for i in range(len(samplers)):
+        sampler = samplers[i]
+        info = dist_info[sampler]
+        bax.plot(info["time"], info["dist"],
+                 color=colors[i], label=sampler)
+
+    bax.plot((0, 200), (0.028, 0.028),
+             c=colors[0], linestyle="--", linewidth=1)
+    plt.text(x=0.89, y=0.06, s="lower bound",
+             color=colors[0], horizontalalignment="center")
+
+    bax.plot((0.015, 0.015), (0.028, 0.079), c="k", linestyle=":")
+    bax.plot((1, 1), (0.028, 0.079), c="k", linestyle=":")
+    bax.plot((8, 8), (0.028, 0.079), c="k", linestyle=":")
+
+    bax.legend(fontsize=legend_fontsize)
+    plt.show()
+
+
+def compare_sgdd_with_different_init_points(init_strategy, dist_info):
+    """Plot the distance optimization curves of SGDD with different
+    initialization points, including zero initialization, random
+    initialization, and Moore–Penrose initialization.
+    Args:
+        init_strategy: Initialization strategies used in SGDD algorithm.
+        dist_info: Information of distance history of different
+            initialization strategies.
+    """
+    plt.figure()
+    title = "Distance Optimization Curves of SGDD With Different \n" \
+            "Initialization Strategies"
+    plt.title(title, fontsize=title_fontsize)
+    plt.xlabel("Iteration", fontsize=label_fontsize)
+    plt.ylabel("L2 Distance", fontsize=label_fontsize)
+    plt.xlim(0, 8.5)
+
+    for i in range(len(init_strategy)):
+        strategy = init_strategy[i]
+        info = dist_info[strategy]
+        x = np.arange(len(info)).astype(dtype=np.str)
+        plt.plot(x, info, color=colors[i], label=strategy)
+        plt.plot(x[-1], info[-1],
+                 marker="*", color=colors[i], markersize=10)
+        plt.text(x[-1], info[-1]+0.004, info[-1],
+                 color=colors[i], horizontalalignment="center")
+
+    plt.plot((0, 8.5), (0.028, 0.028), color="k", linestyle=":")
+    plt.text(x=4.25, y=0.024, s="lower bound (0.028)", horizontalalignment="center")
+
+    plt.legend(fontsize=legend_fontsize)
+    plt.show()
+
+
+def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
+    """Plot the accuracy surface of FedMix+SGDD over different
+    iteration and batch size settings.
+    Args:
+        xticks: Ticks of axis x.
+        yticks: Ticks of axis y.
+        acc_map: The accuracy map.
+    """
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    title = "Accuracy Surface of FedMix over Iteration and Batch Size"
+    ax.set_title(title, fontsize=title_fontsize)
+    ax.set_xlabel("Iteration", fontsize=label_fontsize, labelpad=10)
+    ax.set_ylabel("Batch Size", fontsize=label_fontsize, labelpad=10)
+    ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)
+    plt.xticks(np.arange(len(xticks)), xticks)
+    plt.yticks(np.arange(len(yticks)), yticks)
+
+    x = np.arange(len(xticks))
+    y = np.arange(len(yticks))
+    x, y = np.meshgrid(x, y)
+    z = np.array(acc_map).T
+
+    surf = ax.plot_surface(x, y, z,
+                           cmap=cm.coolwarm, linewidth=1, antialiased=False)
+
+    position = fig.add_axes([0.1, 0.3, 0.06, 0.4])
+    plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+
+    fig.show()
+
+
+def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
+    """Plot the accuracy surface of FedMix+SGDD over different
+    number of groups and selected clients in each group.
+    Args:
+        xticks: Ticks of axis x.
+        yticks: Ticks of axis y.
+        acc_map: The accuracy map.
+    """
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    title = "Accuracy Surface of FedMix over Different\n Number of Groups and Selected Clients"
+    ax.set_title(title, fontsize=title_fontsize)
+    ax.set_xlabel("Num Groups", fontsize=label_fontsize, labelpad=10)
+    ax.set_ylabel("Num Selected Clients\n(Each Group)", fontsize=label_fontsize, labelpad=10)
+    ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)
+    plt.xticks(np.arange(len(xticks)), xticks)
+    plt.yticks(np.arange(len(yticks)), yticks)
+
+    x = np.arange(len(xticks))
+    y = np.arange(len(yticks))
+    x, y = np.meshgrid(x, y)
+    z = np.array(acc_map).T
+
+    surf = ax.plot_surface(x, y, z,
+                           cmap=cm.coolwarm, linewidth=1, antialiased=False)
+
+    position = fig.add_axes([0.1, 0.3, 0.06, 0.4])
+    plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+
+    fig.show()

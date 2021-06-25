@@ -10,7 +10,8 @@ class Server(ABC):
         self.total_weight = 0
 
     @abstractmethod
-    def train_model(self, my_round, num_syncs, clients_per_group, sampler, base_dist):
+    def train_model(self, my_round, num_syncs, clients_per_group,
+                    sampler, batch_size, base_dist):
         """Aggregate clients' models after each iteration. If
         num_syncs synchronizations are reached, middle servers'
         models are then aggregated at the top server.
@@ -22,8 +23,9 @@ class Server(ABC):
             clients_per_group: Number of clients to select in
                 each synchronization.
             sampler: Sample method, could be "random", "brute",
-                "probability", "bayesian", and "ga" ("ga" namely
-                genetic algorithm).
+                "probability", "bayesian", "ga" (namely genetic algorithm),
+                and "sgdd" (namely steepest gradient direction descent).
+            batch_size: Number of samples in a batch data.
             base_dist: Real data distribution, usually global_dist.
         Returns:
             update: The trained model after num_syncs synchronizations.
@@ -95,13 +97,14 @@ class TopServer(Server):
 
         self.middle_servers.extend(servers)
 
-    def train_model(self, my_round, num_syncs, clients_per_group, sampler, base_dist):
+    def train_model(self, my_round, num_syncs, clients_per_group,
+                    sampler, batch_size, base_dist):
         """Call middle servers to train their models and aggregate
         their updates."""
         for s in self.middle_servers:
             s.set_model(self.model)
             update = s.train_model(
-                my_round, num_syncs, clients_per_group, sampler, base_dist)
+                my_round, num_syncs, clients_per_group, sampler, batch_size, base_dist)
             self.merge_updates(clients_per_group, update)
 
         self.update_model()
@@ -136,8 +139,8 @@ class MiddleServer(Server):
         self.clients.extend(clients)
 
     def select_clients(self, my_round, clients_per_group, sampler="random",
-                       base_dist=None, display=False, metrics_dir="metrics",
-                       rand_per_group=2):
+                       batch_size=32, base_dist=None, display=False,
+                       metrics_dir="metrics", rand_per_group=2):
         """Randomly select clients_per_group clients for this round."""
         online_clients = self.online(self.clients)
         num_clients = len(online_clients)
@@ -168,6 +171,9 @@ class MiddleServer(Server):
         elif sampler == "ga":
             sample_clients = self.genetic_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
+        elif sampler == "sgdd":
+            sample_clients = self.sgdd_sampling(
+                rest_clients, num_sample_clients, batch_size, base_dist, rand_clients)
 
         selected_clients = rand_clients + sample_clients
 
@@ -383,7 +389,7 @@ class MiddleServer(Server):
             size_pop: Size of population.
             prob_mutation: Probability of mutation.
         Returns:
-            rand_clients: List of sampled clients.
+            approx_clients: List of sampled clients.
         """
         from opt.genetic_algorithm import GeneticAlgorithm
 
@@ -420,7 +426,92 @@ class MiddleServer(Server):
         approx_clients_ = np.take(clients, best_c_idx_).tolist()
         return approx_clients_
 
-    def get_dist_distance(self, clients, base_dist, use_distance="wasserstein"):
+    def sgdd_sampling(self, clients, num_clients, batch_size, base_dist,
+                      exist_clients=[], mp_init=True):
+        """Search for an approximate optimal solution using genetic algorithm.
+        Args:
+            clients: List of clients to be sampled.
+            num_clients: Number of clients to sample.
+            batch_size: Number of samples in a batch data.
+            base_dist: Real data distribution, usually global_dist.
+            exist_clients: List of existing clients.
+            mp_init: Set to True to use MP Inverse initialization.
+        Returns:
+            approx_clients: List of sampled clients.
+        """
+        from mxnet import nd, autograd
+        from mxnet.gluon import loss as gloss
+
+        F = len(clients[0].train_sample_dist)
+
+        p = nd.array(
+            base_dist / base_dist.sum()).reshape((F, 1))
+        n = batch_size
+        L = len(exist_clients) + num_clients
+        A = nd.array(
+            [c.next_train_batch_dist for c in clients]).T
+        b = nd.array(sum(
+            [c.next_train_batch_dist for c in exist_clients])).reshape((F, 1))
+
+        # Find a initial feasible point
+        x = nd.zeros(shape=(A.shape[1], 1))
+        if mp_init:
+            y = n * L * p - b
+            Ainv_y = nd.dot(nd.array(np.linalg.pinv(A.asnumpy())), y)
+            x[nd.argsort(Ainv_y, axis=0, is_ascend=False)[:num_clients]] = 1
+
+        def _x2indexes(x, val=1, dtype=nd.array):
+            # Convert MXNET NDArray to NumPy NDArray
+            if type(x) == nd.ndarray.NDArray:
+                x = x.asnumpy().flatten()
+            # Find indexes where $val$ locate
+            idx_ = np.where(x == val)[0]
+            # Convert NumPy NDArray to the target type
+            return dtype(idx_)
+
+        def _calculate_distance(A, x, y):
+            distance = gloss.L2Loss(batch_axis=-1)
+            return distance(nd.dot(A, x), y)
+
+        def steepest_gradient_direction_descent(A, x):
+            while True:
+                x.attach_grad()
+                # Calculate current distance
+                with autograd.record():
+                    if mp_init:
+                        y = n * L * p - b
+                    else:
+                        y = n * (len(exist_clients) + x.sum()) * p - b
+                    distance = _calculate_distance(A, x, y)
+                # Calculate gradients
+                distance.backward()
+                # Make a copy of original x
+                x_ = x.copy()
+                # Find index sets of elements 1 and 0
+                E0 = _x2indexes(x, val=0)
+                E1 = _x2indexes(x, val=1)
+                if x.sum().asscalar() < 8:
+                    # Change 0 with minimum gradient to 1
+                    x_[E0[nd.argmin(x.grad[E0], axis=0)]] = 1
+                    del x; x = x_
+                else:
+                    # Permutation 1 with maximum gradient to 0
+                    pair = (E0[nd.argmin(x.grad[E0], axis=0)],
+                            E1[nd.argmax(x.grad[E1], axis=0)])
+                    x_[pair[0]] = 1
+                    x_[pair[1]] = 0
+                    # Continue until distance increases
+                    if _calculate_distance(A, x_, y) < distance:
+                        del x; x = x_
+                    else:
+                        return x
+
+        optimal_x = steepest_gradient_direction_descent(A, x)
+
+        x_idx = _x2indexes(optimal_x, val=1, dtype=np.array)
+        return np.take(clients, x_idx).tolist()
+
+    def get_dist_distance(self, clients, base_dist, use_distance="l2"):
         """Return distance of the base distribution and the mean distribution.
         Args:
             clients: List of sampled clients.
@@ -453,13 +544,14 @@ class MiddleServer(Server):
 
         return distance
 
-    def train_model(self, my_round, num_syncs, clients_per_group, sampler, base_dist):
+    def train_model(self, my_round, num_syncs, clients_per_group,
+                    sampler, batch_size, base_dist):
         """Train self.model for num_syncs synchronizations."""
         for _ in range(num_syncs):
 
             # Select clients for current synchronization
             selected_clients = self.select_clients(
-                my_round, clients_per_group, sampler, base_dist)
+                my_round, clients_per_group, sampler, batch_size, base_dist)
 
             # Train on selected clients for one iteration
             for c in selected_clients:

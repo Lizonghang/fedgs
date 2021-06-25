@@ -108,7 +108,8 @@ def main():
 
         # Simulate training on selected clients
         top_server.train_model(
-            r, args.num_syncs, args.clients_per_group, args.sampler, global_dist)
+            r, args.num_syncs, args.clients_per_group,
+            args.sampler, args.batch_size, global_dist)
 
         # Test model
         if r % args.eval_every == 0 or r == args.num_rounds:
