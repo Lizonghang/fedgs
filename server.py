@@ -668,4 +668,4 @@ class MiddleServer(Server):
               % (self.server_id, self.num_clients, self.num_samples,
                  self.num_train_samples, self.num_test_samples),
               file=log_fp, flush=True, end="\n")
-        # print("sample distribution:", list(self.sample_dist.astype("int64")))
+        print("sample distribution:", list(self.sample_dist.astype("int64")))
