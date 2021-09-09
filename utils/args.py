@@ -8,41 +8,42 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-dataset",
-                        help="name of dataset;",
+                        help="dataset to be used;",
                         type=str,
                         choices=DATASETS,
                         default="femnist")
     parser.add_argument("-model",
-                        help="name of model;",
+                        help="neural network model to be used;",
                         type=str,
                         default="cnn")
     parser.add_argument("--num-rounds",
-                        help="number of rounds to simulate;",
+                        help="total rounds of external synchronizations;",
                         type=int,
                         default=500)
     parser.add_argument("--eval-every",
-                        help="evaluate every _ rounds;",
+                        help="interval rounds for model evaluation;",
                         type=int,
-                        default=20)
+                        default=1)
     parser.add_argument("--num-groups",
                         help="number of groups;",
                         type=int,
                         default=10)
     parser.add_argument("--clients-per-group",
-                        help="number of clients trained per group;",
+                        help="number of clients selected in each group;",
                         type=int,
                         default=10)
     parser.add_argument("-sampler",
-                        help="name of sampler to be used;",
+                        help="sampler to be used, can be random, brute, "
+                             "bayesian, probability, ga and sgdd;",
                         type=str,
                         choices=SAMPLERS,
                         default="sgdd")
     parser.add_argument("--batch-size",
-                        help="batch size when clients train on data;",
+                        help="number of training samples in each batch;",
                         type=int,
                         default=32)
     parser.add_argument("--num-syncs",
-                        help="number of local synchronizations in each group;",
+                        help="number of internal synchronizations in each round;",
                         type=int,
                         default=50)
     parser.add_argument("-lr",
@@ -50,7 +51,7 @@ def parse_args():
                         type=float,
                         default=0.01)
     parser.add_argument("--seed",
-                        help="seed for random client sampling and batch splitting;",
+                        help="seed for client selection and batch splitting;",
                         type=int,
                         default=0)
     parser.add_argument("--metrics-name",
@@ -58,22 +59,22 @@ def parse_args():
                         type=str,
                         default="metrics")
     parser.add_argument("--metrics-dir",
-                        help="dir for metrics file;",
+                        help="folder name for metrics files;",
                         type=str,
                         default="metrics")
     parser.add_argument("--log-dir",
-                        help="dir for log file;",
+                        help="folder name for log files;",
                         type=str,
                         default="logs")
     parser.add_argument("--log-rank",
-                        help="suffix identifier for log file;",
+                        help="identity of the container and log files;",
                         type=int,
                         default=0)
     parser.add_argument("--use-val-set",
                         help="use validation set;",
                         action="store_true")
     parser.add_argument("-ctx",
-                        help="device for training, -1 for cpu and 0~3 for gpu;",
+                        help="device for training, -1 for cpu and 0~7 for gpu;",
                         type=int,
                         default=-1)
 
