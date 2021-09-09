@@ -164,9 +164,9 @@ if __name__ == "__main__":
         "metrics_stat_19.csv",
     )
     legend = (
-        "FedMix",
-        "FedMix+GA",
-        "FedMix+SGDD",
+        "FedGS",
+        "FedGS+GA",
+        "FedGS+SGDD",
         "FedAvg",
     )
 

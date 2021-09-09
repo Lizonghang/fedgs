@@ -785,7 +785,7 @@ def compare_sgdd_with_different_init_points(init_strategy, dist_info):
 
 
 def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
-    """Plot the accuracy surface of FedMix+SGDD over different
+    """Plot the accuracy surface of FedGS+SGDD over different
     iteration and batch size settings.
     Args:
         xticks: Ticks of axis x.
@@ -794,7 +794,7 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    title = "Accuracy Surface of FedMix over Iteration and Batch Size"
+    title = "Accuracy Surface of FedGS over Iteration and Batch Size"
     ax.set_title(title, fontsize=title_fontsize)
     ax.set_xlabel("Iteration", fontsize=label_fontsize, labelpad=10)
     ax.set_ylabel("Batch Size", fontsize=label_fontsize, labelpad=10)
@@ -817,7 +817,7 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
 
 
 def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
-    """Plot the accuracy surface of FedMix+SGDD over different
+    """Plot the accuracy surface of FedGS+SGDD over different
     number of groups and selected clients in each group.
     Args:
         xticks: Ticks of axis x.
@@ -826,7 +826,7 @@ def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    title = "Accuracy Surface of FedMix over Different\n Number of Groups and Selected Clients"
+    title = "Accuracy Surface of FedGS over Different\n Number of Groups and Selected Clients"
     ax.set_title(title, fontsize=title_fontsize)
     ax.set_xlabel("Num Groups", fontsize=label_fontsize, labelpad=10)
     ax.set_ylabel("Num Selected Clients\n(Each Group)", fontsize=label_fontsize, labelpad=10)

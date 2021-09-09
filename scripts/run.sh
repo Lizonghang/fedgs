@@ -16,8 +16,8 @@ NUM_GPU_AVAILABLE=2
 NUM_GPU_BEGIN=0
 
 # container
-IMAGE_NAME="fedmix:mxnet1.4.1mkl-cu101-py3.7"
-CONTAINER_NAME="fedmix.${CONTAINER_RANK}"
+IMAGE_NAME="fedgs"
+CONTAINER_NAME="fedgs.${CONTAINER_RANK}"
 HOST_NAME=${CONTAINER_NAME}
 USE_GPU=$[${NUM_GPU_BEGIN}+${CONTAINER_RANK}%${NUM_GPU_AVAILABLE}]
 
@@ -29,7 +29,7 @@ sudo docker run -dit \
                 -e MXNET_CUDNN_AUTOTUNE_DEFAULT=0 \
                 -e MXNET_ENFORCE_DETERMINISM=1 \
                 -v /etc/localtime:/etc/localtime \
-                -v /home/lizh/fedmix:/root \
+                -v /home/lizh/fedgs:/root \
                 ${IMAGE_NAME}
 
 sudo docker exec -di ${CONTAINER_NAME} bash -c \
