@@ -36,11 +36,11 @@ def parse_args():
                         help="name of sampler to be used;",
                         type=str,
                         choices=SAMPLERS,
-                        default="random")
+                        default="sgdd")
     parser.add_argument("--batch-size",
                         help="batch size when clients train on data;",
                         type=int,
-                        default=5)
+                        default=32)
     parser.add_argument("--num-syncs",
                         help="number of local synchronizations in each group;",
                         type=int,
