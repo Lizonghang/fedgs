@@ -5,8 +5,6 @@ PLOT_CLIENTS = True
 PLOT_SET = "Test"  # "Test" or "Train"
 PLOT_MOVE_AVG = False
 WINDOW_SIZE = 5
-stat_file = "metrics_stat.csv"  # change to None if desired
-sys_file = "metrics_sys.csv"  # change to None if desired
 
 
 def plot_acc_vs_round(stat_metrics, sys_metrics):
@@ -150,34 +148,33 @@ def plot_accuracy_surface_groups_and_clients():
 
 
 if __name__ == "__main__":
-    # metrics = visualization_utils.load_data(stat_file, sys_file)
-    # plot_acc_vs_round(*metrics)
-    # plot_loss_vs_round(*metrics)
-    # plot_bytes_vs_round(*metrics)
-    # plot_comp_vs_round(*metrics)
-    # calc_longest_flops(*metrics)
+    metrics = visualization_utils.load_data(
+        "metrics_stat_19.csv",
+        "metrics_sys_19.csv"
+    )
+
+    plot_acc_vs_round(*metrics)
+    plot_loss_vs_round(*metrics)
+    plot_bytes_vs_round(*metrics)
+    plot_comp_vs_round(*metrics)
 
     stat_files = (
-        "metrics_stat_14.csv",
-        "metrics_stat_13.csv",
         "metrics_stat_21.csv",
         "metrics_stat_19.csv",
     )
     legend = (
-        "FedGS",
-        "FedGS+GA",
-        "FedGS+SGDD",
+        "FedGS(SGDD)",
         "FedAvg",
     )
 
     metrics = [visualization_utils.load_data(f)[0]
                for f in stat_files]
 
-    # compare_accuracy_vs_round(metrics, legend)
-    # compare_loss_vs_round(metrics, legend)
-    # compare_execution_time()
-    # compare_distribution_divergence()
-    # compare_sampler_optim_curve()
-    # compare_sgdd_with_different_init_points()
-    # plot_accuracy_surface_iterations_and_batchsize()
+    compare_accuracy_vs_round(metrics, legend)
+    compare_loss_vs_round(metrics, legend)
+    compare_execution_time()
+    compare_distribution_divergence()
+    compare_sampler_optim_curve()
+    compare_sgdd_with_different_init_points()
+    plot_accuracy_surface_iterations_and_batchsize()
     plot_accuracy_surface_groups_and_clients()

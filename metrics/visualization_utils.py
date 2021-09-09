@@ -438,7 +438,7 @@ def compare_loss_vs_round_number(
     plt.xlabel("Round Number", fontsize=label_fontsize)
     plt.tick_params(labelsize=tick_fontsize)
     plt.xlim((80, 500))
-    plt.ylim((0.4, 0.8))
+    plt.ylim((0.4, 1.2))
     _set_plot_properties(kwargs)
     plt.show()
 
