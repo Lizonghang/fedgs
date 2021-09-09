@@ -1,125 +1,73 @@
-# FedMix: Mixed Frequency Federated Learning with Approximately I.I.D Sampling
+# FedGS: Make Federated Learning Excellent by Grouped SGDD Client Selection on Non-IID Data
 
-## Note
+## Preparation 
 
-* Go to directory of respective dataset for instructions on 
-generating data.
+* For instructions on generating data, please go to the folder of the corresponding dataset. For FEMNIST, please refer to [femnist](https://github.com/Lizonghang/fedgs/tree/main/data/femnist).
 
-* Docker is required to run this demo.
+* NVIDIA-Docker is required.
 
-* To avoid the efficiency bottleneck caused by high-frequency data IO
-(disk → CPU memory → GPU memory), the full dataset is loaded into GPU
-memory, so small datasets are preferred in simulation.
+* NVIDIA CUDA version 10.1 and higher is required.
 
-* To reduce memory usage, clients share a client model, middle servers
-share a server model and a merged update, and the top server owns a 
-server model and a merged update. (5 models in total.)
+## How to run FedGS
+### Build a docker image
 
-* Both the output log and the trained model are stored in 
-``logs/{DATASET}/{CONTAINER_RANK}/``.
+Enter the [scripts](https://github.com/Lizonghang/fedgs/tree/main/scripts) folder and build a docker image named <code>fedgs</code>.
+ 
+> sudo docker build -f build-env.dockerfile -t fedgs .
 
-## Installation
-
-Enter the ``scripts`` directory and use ``scripts/build-env.dockerfile`` 
-to build the image ``fedmix:mxnet1.4.1mkl-cu101-py3.7``:
-
-> sudo docker build -f build-env.dockerfile -t fedmix:mxnet1.4.1mkl-cu101-py3.7 .
-
-Run ``scripts/run.sh`` to create a container ``fedmix.{CONTAINER_RANK}`` 
-and start the simulation:
+Modify <code>/home/lizh/fedgs</code> to your actual project path in [scripts/run.sh](https://github.com/Lizonghang/fedgs/blob/main/scripts/run.sh). Then run [scripts/run.sh](https://github.com/Lizonghang/fedgs/blob/main/scripts/run.sh), which will create a container named <code>fedgs.0</code> if <code>CONTAINER_RANK</code> is set to 0 and starts the task.
 
 > chmod a+x run.sh && ./run.sh
 
-``CONTAINER_RANK`` is an integer defined in ``scripts/run.sh``.
+The output logs and models will be stored in a <code>logs</code> folder created automatically. For example, outputs of the FEMNIST task with container rank 0 will be stored in <code>logs/femnist/0/</code>.
 
-## Instruction
+## Hyperparameters
+We categorize hyperparameters into default settings and custom settings, and we will introduce them separately.
 
-Default values for hyper-parameters are set in ``utils/args.py``, 
-including:
+### Default Hyperparameters
+These hyperparameters are included in [utils/args.py](https://github.com/Lizonghang/fedgs/blob/main/utils/args.py). We list them in the table below (except for custom hyperparameters), but in general, we do not need to pay attention to them.
 
 | Variable Name | Default Value | Optional Values | Description |
 |---|---|---|---|
-| -dataset | "femnist" | "femnist" | Dataset used for federated training. |
-| -model | "cnn" | "cnn" | Neural network used for federated training. |
-| --num-rounds | 500 | integer | Number of rounds to simulate. |
-| --eval-every | 20 | integer | Evaluate the federated model every few rounds. |
-| --num-groups | 10 | integer | Number of groups. |
-| --clients-per-group | 10 | integer | Number of clients trained per group. |
-| -sampler | random | random, brute, bayesian, probability, ga, sgdd | Name of sampler to be used. |
-| --batch-size | 32 | integer | Number of training samples in each batch. |
-| --num-syncs | 50 | integer | Number of local synchronizations in each round. |
-| -lr| 0.01 | float | Learning rate for local optimizers. |
-| --seed | 0 | integer | Seed for random client sampling and batch splitting. |
+| --seed | 0 | integer | Seed for client selection and batch splitting. |
 | --metrics-name | "metrics" | string | Name for metrics file. |
-| --metrics-dir | "metrics" | string | Directory for metrics files. |
-| --log-dir | "logs" | string | Directory for log files. |
-| --log-rank | 0 | integer | Identity for current training process (i.e., ``CONTAINER_RANK``). Log files will be written to ``logs/{DATASET}/{CONTAINER_RANK}/`` (e.g., ``logs/femnist/0/``) |
-| --use-val-set | None | None | Set this option to use the validation set, otherwise the test set is used. |
-| -ctx | -1 | integer | Device used for simulation. -1 for CPU and 0~7 for GPUs.
+| --metrics-dir | "metrics" | string | Folder name for metrics files. |
+| --log-dir | "logs" | string | Folder name for log files. |
+| --use-val-set | None | None | Set this option to use the validation set, otherwise the test set is used. (NOT TESTED) |
 
-Some commonly used hyper-parameters can also be set through 
-``scripts/run.sh``, including:
+### Custom Hyperparameters
+These hyperparameters are included in [scripts/run.sh](https://github.com/Lizonghang/fedgs/blob/main/scripts/run.sh). We list them below.
 
-| Environment Name | Variable Name | Description |
+| Environment Variable | Default Value | Description |
 |---|---|---|
-| CONTAINER_RANK | --log-rank | This will run a container named ``fedmix.{CONTAINER_RANK}`` and write log files to ``logs/{DATASET}/{CONTAINER_RANK}/``. |
-| BATCH_SIZE | --batch-size | Same as the above table. |
-| LEARNING_RATE | -lr | Same as the above table. |
-| NUM_GROUPS | --num-groups | Same as the above table. |
-| CLIENTS_PER_GROUP | --clients-per-group | Same as the above table. |
-| SAMPLER | -sampler | Same as the above table. |
-| NUM_SYNCS | --num-syncs | Same as the above table. |
-| NUM_ROUNDS | --num-rounds | Same as the above table. |
-| DATASET | -dataset | Same as the above table. |
-| MODEL | -model | Same as the above table. |
-| EVAL_EVERY | --eval-every | Same as the above table. |
+| CONTAINER_RANK | 0 | This identify the container (e.g., <code>fedgs.0</code>) and log files (e.g., <code>logs/femnist/0/output.0</code>). |
+| BATCH_SIZE | 32 | Number of training samples in each batch. |
+| LEARNING_RATE | 0.01 | Learning rate for local optimizers. |
+| NUM_GROUPS | 10 | Number of groups. |
+| CLIENTS_PER_GROUP | 10 | Number of clients selected in each group. |
+| SAMPLER | sgdd | Sampler to be used, can be random, brute, bayesian, probability, ga and sgdd. |
+| NUM_SYNCS | 50 | Number of internal synchronizations in each round. |
+| NUM_ROUNDS | 500 | Total rounds of external synchronizations. |
+| DATASET | femnist | Dataset to be used, only FEMNIST is supported currently. |
+| MODEL | cnn | Neural network model to be used. |
+| EVAL_EVERY | 1 | Interval rounds for model evaluation. |
+| NUM_GPU_AVAILABLE | 2 | Number of GPUs available. |
+| NUM_GPU_BEGIN | 0 | Index of the first available GPU. |
+| IMAGE_NAME | fedgs | Experimental image to be used. |
 
-Other required environment variables are:
+> NOTE: If you wish to specify a GPU device (e.g., GPU0), please set <code>NUM_GPU_AVAILABLE=1</code> and <code>NUM_GPU_BEGIN=0</code>.
 
-| Environment Name | Default Value | Description |
-|---|---|---|
-| NUM_GPU_AVAILABLE | 2 | The number of GPUs available. |
-| NUM_GPU_BEGIN | 0 | The index of the first GPU available. |
-| IMAGE_NAME | fedmix:mxnet1.4.1mkl-cu101-py3.7 | Name of the basic image to be used. |
-| CONTAINER_NAME | fedmix.{CONTAINER_RANK} | Name of the container created. |
-| HOST_NAME | fedmix.{CONTAINER_RANK} | Hostname of the container. |
-| USE_GPU | (auto) | Index of the GPU device used for simulation. This is set automatically thourgh {NUM_GPU_BEGIN} + {CONTAINER_RANK} % {NUM_GPU_AVAILABLE}. |
+> NOTE: This script will mount project files <code>/home/lizh/fedgs</code> from the host into the container <code>/root</code>, so please check carefully whether your file path is correct.
 
-We recommend to mount files from the host computer into the container, 
-modify ``scripts/run.sh`` and change the file path ``/home/lizh/fedmix`` 
-to your own path.
+## Visualization
 
-## Results and Visualization
+The visualizer [metrics/visualize.py](https://github.com/Lizonghang/fedgs/blob/main/metrics/visualize.py) reads metrics 
+logs (e.g., <code>metrics/metrics_stat_0.csv</code> and <code>metrics/metrics_sys_0.csv</code>) and draws curves of accuracy, loss and so on. 
 
-Using the default setting, we got the average test accuracy 0.859068 
-and the average test loss 0.421488.
+## Reference
 
-> tail -n 5 logs/femnist/0/output.0
+* This demo is implemented on [LEAF-MX](https://github.com/Lizonghang/leaf-mx), which is a [MXNET](https://github.com/apache/incubator-mxnet) implementation of the well-known federated learning framework [LEAF](https://github.com/TalwalkarLab/leaf).
 
-```
---- Round 500 of 500: Training 100 clients ---
-train_accuracy: 0.889864, 10th percentile: 0.824132, 50th percentile: 0.898551, 90th percentile 0.956957
-train_loss: 0.311822, 10th percentile: 0.150281, 50th percentile: 0.275272, 90th percentile 0.502621
-test_accuracy: 0.859068, 10th percentile: 0.707021, 50th percentile: 0.876524, 90th percentile 0.976016
-test_loss: 0.421488, 10th percentile: 0.131551, 50th percentile: 0.360824, 90th percentile 0.852479
-```
+* Li, Zonghang, Yihong He, Huaman Zhou, *et al.* "FedGS: Make Federated Learning Excellent by Grouped SGDD Client Selection on Non-IID Data." (Under Review)
 
-Tools in ``metrics/visualization_utils.py`` can be used for 
-visualization. The example ``metrics/visualize.py`` reads metrics 
-logs from ``metrics/metrics_stat.csv`` and ``metrics/metrics_sys.csv``, 
-and plot curves of accuracy, bytes pushed and pulled, and flops 
-of clients.
-
-<img src="metrics/train_acc_vs_round.png" width="400px" /><img src="metrics/test_acc_vs_round.png" width="400px" />
-
-<img src="metrics/train_loss_vs_round.png" width="400px" /><img src="metrics/test_loss_vs_round.png" width="400px" />
-
-<img src="metrics/train_acc_vs_round_per_client.png" width="400px" /><img src="metrics/test_acc_vs_round_per_client.png" width="400px" />
-
-<img src="metrics/train_loss_vs_round_per_client.png" width="400px" /><img src="metrics/test_loss_vs_round_per_client.png" width="400px" />
-
-<div align="center"><img src="metrics/comm_bytes.png" width="400px" />
-
-<div align="center"><img src="metrics/flops_vs_round.png" width="800px" />
-
-Longest FLOPs path: 4.29E+12
+* If you get trouble using this repository, please kindly contact us. Our email: lizhuestc@gmail.com
