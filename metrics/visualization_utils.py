@@ -655,21 +655,30 @@ def compare_execution_time(samplers, exec_time):
     """
     from brokenaxes import brokenaxes
 
-    plt.figure()
+    label_fontsize = 16
+    tick_fontsize = 14
+    text_fontsize = 12
+    plt.figure(figsize=(5, 4))
 
     bax = brokenaxes(ylims=((0, 8), (977, 980)), hspace=.3, despine=False)
-    title = "Execution Time of SGDD and Other Samplers"
-    bax.set_title(title, fontsize=title_fontsize)
-    bax.set_xlabel("Sampler", fontsize=label_fontsize)
+
+    plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize, rotation=15)
+    plt.yticks(fontsize=tick_fontsize)
+
+    # title = "Execution Time of SGDD and Other Samplers"
+    # bax.set_title(title, fontsize=title_fontsize)
+    # bax.set_xlabel("Sampler", fontsize=label_fontsize)
     bax.set_ylabel("Execution Time (s)", fontsize=label_fontsize)
 
     for i in range(len(samplers)):
         bax.bar(x=samplers[i], height=exec_time[i], align="center",
-                color="w", edgecolor=colors[i], hatch=hatches[1])
-        bax.text(x=samplers[i], y=exec_time[i]+0.4, s=exec_time[i],
-                 size=text_fontsize, horizontalalignment="center")
+                color="w", edgecolor=colors[i])
+        # bax.text(x=samplers[i], y=exec_time[i]+0.4, s=str(exec_time[i]),
+        #          size=text_fontsize, horizontalalignment="center")
 
-    plt.show()
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(f"execution-time-compare.pdf")
 
 
 def compare_distribution_divergence(samplers, dist_info):
@@ -679,13 +688,16 @@ def compare_distribution_divergence(samplers, dist_info):
         dist_info: Information of distribution divergence, including:
             mean, median, std, max and min.
     """
-    plt.figure()
+    label_fontsize = 16
+    tick_fontsize = 14
+    text_fontsize = 12
+    plt.figure(figsize=(5, 4))
 
-    title = "Distribution Divergence of SGDD and Other Samplers"
-    plt.title(title, fontsize=title_fontsize)
-    plt.xlabel("Sampler", fontsize=label_fontsize)
-    plt.ylabel("Distribution Divergence (L2)", fontsize=label_fontsize)
-    plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize)
+    # title = "Distribution Divergence of SGDD and Other Samplers"
+    # plt.title(title, fontsize=title_fontsize)
+    # plt.xlabel("Sampler", fontsize=label_fontsize)
+    plt.ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
+    plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize, rotation=15)
     plt.yticks(fontsize=tick_fontsize)
     plt.ylim((0, 0.112))
 
@@ -703,12 +715,14 @@ def compare_distribution_divergence(samplers, dist_info):
         plt.plot((i-0.1, i+0.1), (min_val_, min_val_), color=colors[i])
         plt.plot((i, i), (min_val_, max_val_), color=colors[i])
         # Draw texts
-        plt.text(x=i, y=min_val_-0.005, s=min_val_,
-                 color=colors[i], horizontalalignment="center")
+        plt.text(x=i, y=min_val_-0.007, s=min_val_,
+                 color=colors[i], horizontalalignment="center", fontsize=text_fontsize)
         plt.text(x=i, y=max_val_+0.002, s=max_val_,
-                 color=colors[i], horizontalalignment="center")
+                 color=colors[i], horizontalalignment="center", fontsize=text_fontsize)
 
-    plt.show()
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(f"dist-divergence-comparison.pdf")
 
 
 def compare_sampler_optim_curve(samplers, dist_info):
@@ -719,15 +733,21 @@ def compare_sampler_optim_curve(samplers, dist_info):
     """
     from brokenaxes import brokenaxes
 
-    plt.figure(figsize=(7, 5))
+    label_fontsize = 16
+    tick_fontsize = 14
+    legend_fontsize = 15
+    plt.figure(figsize=(5, 4))
+
+    # plt.xticks(fontsize=tick_fontsize)
+    # plt.yticks(fontsize=tick_fontsize)
 
     bax = brokenaxes(xlims=((0.001, 0.015), (0.018, 1), (1.01, 8), (11, 979)),
                      width_ratios=[0.1, 0.1, 0.1, 0.1],
                      wspace=0, despine=False, d=0)
-    title = "Distance Optimization Curves of SGDD and Other Samplers"
-    bax.set_title(title, fontsize=title_fontsize)
+    # title = "Distance Optimization Curves of SGDD and Other Samplers"
+    # bax.set_title(title, fontsize=title_fontsize)
     bax.set_xlabel("Time (s)", fontsize=label_fontsize)
-    bax.set_ylabel("L2 Distance", fontsize=label_fontsize)
+    bax.set_ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
     plt.xticks([0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75],
                [0, 0.007, 0.015, 0.5, 1, 4.5, 8])
 
@@ -739,15 +759,18 @@ def compare_sampler_optim_curve(samplers, dist_info):
 
     bax.plot((0, 200), (0.028, 0.028),
              c=colors[0], linestyle="--", linewidth=1)
-    plt.text(x=0.89, y=0.06, s="lower bound",
-             color=colors[0], horizontalalignment="center")
+    # plt.text(x=0.89, y=0.06, s="lower bound",
+    #          color=colors[0], horizontalalignment="center",
+    #          fontsize=text_fontsize)
 
     bax.plot((0.015, 0.015), (0.028, 0.079), c="k", linestyle=":")
     bax.plot((1, 1), (0.028, 0.079), c="k", linestyle=":")
     bax.plot((8, 8), (0.028, 0.079), c="k", linestyle=":")
 
     bax.legend(fontsize=legend_fontsize)
-    plt.show()
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(f"dist-optim-curve.pdf")
 
 
 def compare_sgdd_with_different_init_points(init_strategy, dist_info):
@@ -792,15 +815,19 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
         yticks: Ticks of axis y.
         acc_map: The accuracy map.
     """
-    fig = plt.figure()
+    label_fontsize = 16
+    tick_fontsize = 14
+    legend_fontsize = 15
+
+    fig = plt.figure(figsize=(5, 4))
     ax = fig.gca(projection='3d')
-    title = "Accuracy Surface of FedGS over Iteration and Batch Size"
-    ax.set_title(title, fontsize=title_fontsize)
-    ax.set_xlabel("Iteration", fontsize=label_fontsize, labelpad=10)
-    ax.set_ylabel("Batch Size", fontsize=label_fontsize, labelpad=10)
+    # title = "Accuracy Surface of FedGS over Iteration and Batch Size"
+    # ax.set_title(title, fontsize=title_fontsize)
+    ax.set_xlabel("Iterations Per Round \n $T$", fontsize=label_fontsize, labelpad=10)
+    ax.set_ylabel("Batch Size \n $n$", fontsize=label_fontsize, labelpad=10)
     ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)
-    plt.xticks(np.arange(len(xticks)), xticks)
-    plt.yticks(np.arange(len(yticks)), yticks)
+    plt.xticks(np.arange(len(xticks)), xticks, fontsize=tick_fontsize)
+    plt.yticks(np.arange(len(yticks)), yticks, fontsize=tick_fontsize)
 
     x = np.arange(len(xticks))
     y = np.arange(len(yticks))
@@ -810,10 +837,12 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
     surf = ax.plot_surface(x, y, z,
                            cmap=cm.coolwarm, linewidth=1, antialiased=False)
 
-    position = fig.add_axes([0.1, 0.3, 0.06, 0.4])
-    plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+    position = fig.add_axes([0.05, 0.3, 0.06, 0.4])
+    cb = plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+    cb.ax.tick_params(labelsize=tick_fontsize)
 
-    fig.show()
+    plt.show()
+    # plt.savefig(f"acc-surface-batch-iter.pdf")
 
 
 def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
@@ -824,15 +853,19 @@ def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
         yticks: Ticks of axis y.
         acc_map: The accuracy map.
     """
-    fig = plt.figure()
+    label_fontsize = 16
+    tick_fontsize = 14
+    legend_fontsize = 15
+
+    fig = plt.figure(figsize=(5, 4))
     ax = fig.gca(projection='3d')
-    title = "Accuracy Surface of FedGS over Different\n Number of Groups and Selected Clients"
-    ax.set_title(title, fontsize=title_fontsize)
-    ax.set_xlabel("Num Groups", fontsize=label_fontsize, labelpad=10)
-    ax.set_ylabel("Num Selected Clients\n(Each Group)", fontsize=label_fontsize, labelpad=10)
+    # title = "Accuracy Surface of FedGS over Different\n Number of Groups and Selected Clients"
+    # ax.set_title(title, fontsize=title_fontsize)
+    ax.set_xlabel("Num Groups \n $M$", fontsize=label_fontsize, labelpad=10)
+    ax.set_ylabel("Selected Devices\n Per Group $L$", fontsize=label_fontsize, labelpad=10)
     ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)
-    plt.xticks(np.arange(len(xticks)), xticks)
-    plt.yticks(np.arange(len(yticks)), yticks)
+    plt.xticks(np.arange(len(xticks)), xticks, fontsize=tick_fontsize)
+    plt.yticks(np.arange(len(yticks)), yticks, fontsize=tick_fontsize)
 
     x = np.arange(len(xticks))
     y = np.arange(len(yticks))
@@ -842,7 +875,8 @@ def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
     surf = ax.plot_surface(x, y, z,
                            cmap=cm.coolwarm, linewidth=1, antialiased=False)
 
-    position = fig.add_axes([0.1, 0.3, 0.06, 0.4])
-    plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+    position = fig.add_axes([0.05, 0.3, 0.06, 0.4])
+    cb = plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
+    cb.ax.tick_params(labelsize=tick_fontsize)
 
-    fig.show()
+    plt.savefig(f"acc-surface-groups-devices.pdf")

@@ -71,7 +71,7 @@ def compare_execution_time():
 def compare_distribution_divergence():
     """Compare the distribution divergence of Random, Brute, MC,
     Bayesian, GA and SGDD samplers."""
-    samplers = ["Brute", "Bayesian", "GA", "MC", "SGDD", "Random"]
+    samplers = ["Brute", "Bayesian", "GA", "MC", "GBP-CS", "Random"]
     dist_info = {
         "mean": [0.032, 0.047, 0.036, 0.040, 0.036, 0.083],
         "median": [0.030, 0.046, 0.036, 0.039, 0.034, 0.082],
@@ -85,9 +85,9 @@ def compare_distribution_divergence():
 def compare_sampler_optim_curve():
     """Compare the optimization curves of Brute, MC, Bayesian, GA
     and SGDD samplers over time."""
-    samplers = ["Brute", "Bayesian", "MC", "GA", "SGDD"]
+    samplers = ["Brute", "Bayesian", "MC", "GA", "GBP-CS"]
     dist_info = {
-        "SGDD": {"time": [0.003, 0.006, 0.009, 0.012, 0.015],
+        "GBP-CS": {"time": [0.003, 0.006, 0.009, 0.012, 0.015],
                  "dist": [0.037, 0.035, 0.031, 0.029, 0.029]},
         "MC": {"time": [0.001, 0.002, 0.003, 0.004, 0.005, 0.007, 0.033, 0.034,
                         0.041, 0.120],
@@ -153,10 +153,10 @@ if __name__ == "__main__":
         "metrics_sys_19.csv"
     )
 
-    plot_acc_vs_round(*metrics)
-    plot_loss_vs_round(*metrics)
-    plot_bytes_vs_round(*metrics)
-    plot_comp_vs_round(*metrics)
+    # plot_acc_vs_round(*metrics)
+    # plot_loss_vs_round(*metrics)
+    # plot_bytes_vs_round(*metrics)
+    # plot_comp_vs_round(*metrics)
 
     stat_files = (
         "metrics_stat_21.csv",
@@ -170,11 +170,11 @@ if __name__ == "__main__":
     metrics = [visualization_utils.load_data(f)[0]
                for f in stat_files]
 
-    compare_accuracy_vs_round(metrics, legend)
-    compare_loss_vs_round(metrics, legend)
-    compare_execution_time()
-    compare_distribution_divergence()
-    compare_sampler_optim_curve()
-    compare_sgdd_with_different_init_points()
+    # compare_accuracy_vs_round(metrics, legend)
+    # compare_loss_vs_round(metrics, legend)
+    # compare_execution_time()
+    # compare_distribution_divergence()
+    # compare_sampler_optim_curve()
+    # compare_sgdd_with_different_init_points()
     plot_accuracy_surface_iterations_and_batchsize()
-    plot_accuracy_surface_groups_and_clients()
+    # plot_accuracy_surface_groups_and_clients()
