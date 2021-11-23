@@ -32,6 +32,7 @@ text_fontsize = 12
 colors = ("m", "orange", "b", "gray", "g", "purple", "pink")
 hatches = ("x", "/", "\\", "-")
 
+
 def load_data(stat_metrics_file, sys_metrics_file=None):
     """Loads the data from the given stat_metric and sys_metric files."""
     stat_metrics = pd.read_csv(stat_metrics_file) if stat_metrics_file else None
@@ -657,7 +658,6 @@ def compare_execution_time(samplers, exec_time):
 
     label_fontsize = 16
     tick_fontsize = 14
-    text_fontsize = 12
     plt.figure(figsize=(5, 4))
 
     bax = brokenaxes(ylims=((0, 8), (977, 980)), hspace=.3, despine=False)
@@ -665,9 +665,6 @@ def compare_execution_time(samplers, exec_time):
     plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize, rotation=15)
     plt.yticks(fontsize=tick_fontsize)
 
-    # title = "Execution Time of SGDD and Other Samplers"
-    # bax.set_title(title, fontsize=title_fontsize)
-    # bax.set_xlabel("Sampler", fontsize=label_fontsize)
     bax.set_ylabel("Execution Time (s)", fontsize=label_fontsize)
 
     for i in range(len(samplers)):
@@ -692,9 +689,6 @@ def compare_distribution_divergence(samplers, dist_info):
     text_fontsize = 12
     plt.figure(figsize=(5, 4))
 
-    # title = "Distribution Divergence of SGDD and Other Samplers"
-    # plt.title(title, fontsize=title_fontsize)
-    # plt.xlabel("Sampler", fontsize=label_fontsize)
     plt.ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
     plt.xticks(range(len(samplers)), samplers, fontsize=tick_fontsize, rotation=15)
     plt.yticks(fontsize=tick_fontsize)
@@ -732,18 +726,13 @@ def compare_sampler_optim_curve(samplers, dist_info):
     from brokenaxes import brokenaxes
 
     label_fontsize = 16
-    tick_fontsize = 14
     legend_fontsize = 15
     plt.figure(figsize=(5, 4))
-
-    # plt.xticks(fontsize=tick_fontsize)
-    # plt.yticks(fontsize=tick_fontsize)
 
     bax = brokenaxes(xlims=((0.001, 0.015), (0.018, 1), (1.01, 8), (11, 979)),
                      width_ratios=[0.1, 0.1, 0.1, 0.1],
                      wspace=0, despine=False, d=0)
-    # title = "Distance Optimization Curves of SGDD and Other Samplers"
-    # bax.set_title(title, fontsize=title_fontsize)
+
     bax.set_xlabel("Time (s)", fontsize=label_fontsize)
     bax.set_ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
     plt.xticks([0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75],
@@ -770,12 +759,12 @@ def compare_sampler_optim_curve(samplers, dist_info):
     plt.savefig(f"dist-optim-curve.pdf")
 
 
-def compare_sgdd_with_different_init_points(init_strategy, dist_info):
-    """Plot the distance optimization curves of SGDD with different
+def compare_gbp_cs_with_different_init_points(init_strategy, dist_info):
+    """Plot the distance optimization curves of GBP-CS with different
     initialization points, including zero initialization, random
     initialization, and Moore–Penrose initialization.
     Args:
-        init_strategy: Initialization strategies used in SGDD algorithm.
+        init_strategy: Initialization strategies used in GBP-CS algorithm.
         dist_info: Information of distance history of different
             initialization strategies.
     """
@@ -785,9 +774,6 @@ def compare_sgdd_with_different_init_points(init_strategy, dist_info):
     text_fontsize = 15
 
     plt.figure(figsize=(5, 4))
-    # title = "Distance Optimization Curves of SGDD With Different \n" \
-    #         "Initialization Strategies"
-    # plt.title(title, fontsize=title_fontsize)
     plt.xlabel("GBP-CS Iteration", fontsize=label_fontsize)
     plt.ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
     plt.xlim(0, 8.5)
@@ -815,7 +801,7 @@ def compare_sgdd_with_different_init_points(init_strategy, dist_info):
 
 
 def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
-    """Plot the accuracy surface of FedGS+SGDD over different
+    """Plot the accuracy surface of FedGS+GBP-CS over different
     iteration and batch size settings.
     Args:
         xticks: Ticks of axis x.
@@ -824,12 +810,9 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
     """
     label_fontsize = 16
     tick_fontsize = 14
-    legend_fontsize = 15
 
     fig = plt.figure(figsize=(5, 4))
     ax = fig.gca(projection='3d')
-    # title = "Accuracy Surface of FedGS over Iteration and Batch Size"
-    # ax.set_title(title, fontsize=title_fontsize)
     ax.set_xlabel("Iterations Per Round \n $T$", fontsize=label_fontsize, labelpad=10)
     ax.set_ylabel("Batch Size \n $n$", fontsize=label_fontsize, labelpad=10)
     ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)
@@ -852,7 +835,7 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
 
 
 def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
-    """Plot the accuracy surface of FedGS+SGDD over different
+    """Plot the accuracy surface of FedGS+GBP-CS over different
     number of groups and selected clients in each group.
     Args:
         xticks: Ticks of axis x.
@@ -861,12 +844,9 @@ def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
     """
     label_fontsize = 16
     tick_fontsize = 14
-    legend_fontsize = 15
 
     fig = plt.figure(figsize=(5, 4))
     ax = fig.gca(projection='3d')
-    # title = "Accuracy Surface of FedGS over Different\n Number of Groups and Selected Clients"
-    # ax.set_title(title, fontsize=title_fontsize)
     ax.set_xlabel("Num Groups \n $M$", fontsize=label_fontsize, labelpad=10)
     ax.set_ylabel("Selected Devices\n Per Group $L$", fontsize=label_fontsize, labelpad=10)
     ax.set_zlabel("Accuracy", fontsize=label_fontsize, labelpad=10)

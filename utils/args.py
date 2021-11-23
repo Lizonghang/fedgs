@@ -1,7 +1,7 @@
 import argparse
 
 DATASETS = ["sent140", "femnist", "shakespeare", "celeba", "synthetic", "reddit"]
-SAMPLERS = ["random", "brute", "bayesian", "probability", "ga", "sgdd"]
+SAMPLERS = ["random", "brute", "bayesian", "probability", "ga", "gbp-cs"]
 
 
 def parse_args():
@@ -34,10 +34,10 @@ def parse_args():
                         default=10)
     parser.add_argument("-sampler",
                         help="sampler to be used, can be random, brute, "
-                             "bayesian, probability, ga and sgdd;",
+                             "bayesian, probability, ga and gbp-cs;",
                         type=str,
                         choices=SAMPLERS,
-                        default="sgdd")
+                        default="gbp-cs")
     parser.add_argument("--batch-size",
                         help="number of training samples in each batch;",
                         type=int,

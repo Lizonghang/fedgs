@@ -45,7 +45,7 @@ These hyperparameters are included in [scripts/run.sh](https://github.com/Lizong
 | LEARNING_RATE | 0.01 | Learning rate for local optimizers. |
 | NUM_GROUPS | 10 | Number of groups. |
 | CLIENTS_PER_GROUP | 10 | Number of clients selected in each group. |
-| SAMPLER | sgdd | Sampler to be used, can be random, brute, bayesian, probability, ga and sgdd. |
+| SAMPLER | gbp-cs | Sampler to be used, can be random, brute, bayesian, probability, ga and gbp-cs. |
 | NUM_SYNCS | 50 | Number of internal synchronizations in each round. |
 | NUM_ROUNDS | 500 | Total rounds of external synchronizations. |
 | DATASET | femnist | Dataset to be used, only FEMNIST is supported currently. |

@@ -24,7 +24,8 @@ class Server(ABC):
                 each synchronization.
             sampler: Sample method, could be "random", "brute",
                 "probability", "bayesian", "ga" (namely genetic algorithm),
-                and "sgdd" (namely steepest gradient direction descent).
+                and "gbp-cs" (namely gradient-based binary permutation
+                client selection).
             batch_size: Number of samples in a batch data.
             base_dist: Real data distribution, usually global_dist.
         Returns:
@@ -171,8 +172,8 @@ class MiddleServer(Server):
         elif sampler == "ga":
             sample_clients = self.genetic_sampling(
                 rest_clients, num_sample_clients, my_round, base_dist, rand_clients)
-        elif sampler == "sgdd":
-            sample_clients = self.sgdd_sampling(
+        elif sampler == "gbp-cs":
+            sample_clients = self.gbp_cs_sampling(
                 rest_clients, num_sample_clients, batch_size, base_dist, rand_clients)
 
         selected_clients = rand_clients + sample_clients
@@ -426,7 +427,7 @@ class MiddleServer(Server):
         approx_clients_ = np.take(clients, best_c_idx_).tolist()
         return approx_clients_
 
-    def sgdd_sampling(self, clients, num_clients, batch_size, base_dist,
+    def gbp_cs_sampling(self, clients, num_clients, batch_size, base_dist,
                       exist_clients=[], mp_init=True):
         """Search for an approximate optimal solution using genetic algorithm.
         Args:
@@ -473,7 +474,7 @@ class MiddleServer(Server):
             distance = gloss.L2Loss(batch_axis=-1)
             return distance(nd.dot(A, x), y)
 
-        def steepest_gradient_direction_descent(A, x):
+        def gradient_based_binary_permutation(A, x):
             while True:
                 x.attach_grad()
                 # Calculate current distance
@@ -506,7 +507,7 @@ class MiddleServer(Server):
                     else:
                         return x
 
-        optimal_x = steepest_gradient_direction_descent(A, x)
+        optimal_x = gradient_based_binary_permutation(A, x)
 
         x_idx = _x2indexes(optimal_x, val=1, dtype=np.array)
         return np.take(clients, x_idx).tolist()
