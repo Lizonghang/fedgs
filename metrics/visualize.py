@@ -175,6 +175,6 @@ if __name__ == "__main__":
     # compare_execution_time()
     # compare_distribution_divergence()
     # compare_sampler_optim_curve()
-    # compare_sgdd_with_different_init_points()
-    plot_accuracy_surface_iterations_and_batchsize()
+    compare_sgdd_with_different_init_points()
+    # plot_accuracy_surface_iterations_and_batchsize()
     # plot_accuracy_surface_groups_and_clients()

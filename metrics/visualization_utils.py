@@ -677,7 +677,6 @@ def compare_execution_time(samplers, exec_time):
         #          size=text_fontsize, horizontalalignment="center")
 
     plt.tight_layout()
-    # plt.show()
     plt.savefig(f"execution-time-compare.pdf")
 
 
@@ -721,7 +720,6 @@ def compare_distribution_divergence(samplers, dist_info):
                  color=colors[i], horizontalalignment="center", fontsize=text_fontsize)
 
     plt.tight_layout()
-    # plt.show()
     plt.savefig(f"dist-divergence-comparison.pdf")
 
 
@@ -769,7 +767,6 @@ def compare_sampler_optim_curve(samplers, dist_info):
 
     bax.legend(fontsize=legend_fontsize)
     plt.tight_layout()
-    # plt.show()
     plt.savefig(f"dist-optim-curve.pdf")
 
 
@@ -782,13 +779,21 @@ def compare_sgdd_with_different_init_points(init_strategy, dist_info):
         dist_info: Information of distance history of different
             initialization strategies.
     """
-    plt.figure()
-    title = "Distance Optimization Curves of SGDD With Different \n" \
-            "Initialization Strategies"
-    plt.title(title, fontsize=title_fontsize)
-    plt.xlabel("Iteration", fontsize=label_fontsize)
-    plt.ylabel("L2 Distance", fontsize=label_fontsize)
+    label_fontsize = 16
+    tick_fontsize = 15
+    legend_fontsize = 15
+    text_fontsize = 15
+
+    plt.figure(figsize=(5, 4))
+    # title = "Distance Optimization Curves of SGDD With Different \n" \
+    #         "Initialization Strategies"
+    # plt.title(title, fontsize=title_fontsize)
+    plt.xlabel("GBP-CS Iteration", fontsize=label_fontsize)
+    plt.ylabel("Dist Divergence (L2)", fontsize=label_fontsize)
     plt.xlim(0, 8.5)
+    plt.ylim(0.02, 0.13)
+    plt.xticks(fontsize=tick_fontsize)
+    plt.yticks(fontsize=tick_fontsize)
 
     for i in range(len(init_strategy)):
         strategy = init_strategy[i]
@@ -797,14 +802,16 @@ def compare_sgdd_with_different_init_points(init_strategy, dist_info):
         plt.plot(x, info, color=colors[i], label=strategy)
         plt.plot(x[-1], info[-1],
                  marker="*", color=colors[i], markersize=10)
-        plt.text(x[-1], info[-1]+0.004, info[-1],
-                 color=colors[i], horizontalalignment="center")
+        plt.text(x[-1], info[-1]+0.004, info[-1], color=colors[i],
+                 horizontalalignment="center", fontsize=text_fontsize)
 
     plt.plot((0, 8.5), (0.028, 0.028), color="k", linestyle=":")
-    plt.text(x=4.25, y=0.024, s="lower bound (0.028)", horizontalalignment="center")
+    plt.text(x=4.25, y=0.021, s="Optimal Val: 0.028",
+             horizontalalignment="center", fontsize=text_fontsize)
 
     plt.legend(fontsize=legend_fontsize)
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(f"dist-optim-init-curve.pdf")
 
 
 def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
@@ -841,8 +848,7 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
     cb = plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
     cb.ax.tick_params(labelsize=tick_fontsize)
 
-    plt.show()
-    # plt.savefig(f"acc-surface-batch-iter.pdf")
+    plt.savefig(f"acc-surface-batch-iter.pdf")
 
 
 def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
