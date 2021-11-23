@@ -1,4 +1,4 @@
-# FedGS: Make Federated Learning Excellent by Grouped SGDD Client Selection on Non-IID Data
+# FedGS: Data Heterogeneity-Robust Federated Learning via Group Client Selection in Industrial IoT
 
 ## Preparation 
 
@@ -68,6 +68,6 @@ logs (e.g., <code>metrics/metrics_stat_0.csv</code> and <code>metrics/metrics_sy
 
 * This demo is implemented on [LEAF-MX](https://github.com/Lizonghang/leaf-mx), which is a [MXNET](https://github.com/apache/incubator-mxnet) implementation of the well-known federated learning framework [LEAF](https://github.com/TalwalkarLab/leaf).
 
-* Li, Zonghang, Yihong He, Huaman Zhou, *et al.* "FedGS: Make Federated Learning Excellent by Grouped SGDD Client Selection on Non-IID Data." (Under Review)
+* Li, Zonghang, Yihong He, Hongfang Yu, *et al.* "Data Heterogeneity-Robust Federated Learning via Group Client Selection in Industrial IoT." Submitted to *IEEE Internet of Things Journal*, (2021).
 
 * If you get trouble using this repository, please kindly contact us. Our email: lizhuestc@gmail.com
