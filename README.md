@@ -64,6 +64,9 @@ These hyperparameters are included in [scripts/run.sh](https://github.com/Lizong
 The visualizer [metrics/visualize.py](https://github.com/Lizonghang/fedgs/blob/main/metrics/visualize.py) reads metrics 
 logs (e.g., <code>metrics/metrics_stat_0.csv</code> and <code>metrics/metrics_sys_0.csv</code>) and draws curves of accuracy, loss and so on. 
 
+## Note
+This project is licensed under the terms of the apache-2.0 license.
+
 ## Reference
 
 * This demo is implemented on [LEAF-MX](https://github.com/Lizonghang/leaf-mx), which is a [MXNET](https://github.com/apache/incubator-mxnet) implementation of the well-known federated learning framework [LEAF](https://github.com/TalwalkarLab/leaf).
