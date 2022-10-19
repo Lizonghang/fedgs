@@ -71,6 +71,6 @@ This project is licensed under the terms of the apache-2.0 license.
 
 * This demo is implemented on [LEAF-MX](https://github.com/Lizonghang/leaf-mx), which is a [MXNET](https://github.com/apache/incubator-mxnet) implementation of the well-known federated learning framework [LEAF](https://github.com/TalwalkarLab/leaf).
 
-* Li, Zonghang, Yihong He, Hongfang Yu, *et al.* "Data Heterogeneity-Robust Federated Learning via Group Client Selection in Industrial IoT." Submitted to *IEEE Internet of Things Journal*, (2021).
+* Li, Zonghang, Yihong He, Hongfang Yu, *et al.*: "Data heterogeneity-robust federated learning via group client selection in industrial IoT." *IEEE Internet of Things Journal*, vol. 9, no. 18, pp. 17844-17857. IEEE, 2021, doi: 10.1109/JIOT.2022.3161943.
 
 * If you get trouble using this repository, please kindly contact us. Our email: lizhuestc@gmail.com
