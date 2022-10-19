@@ -149,14 +149,13 @@ def plot_accuracy_surface_groups_and_clients():
 
 if __name__ == "__main__":
     metrics = visualization_utils.load_data(
-        "metrics_stat_19.csv",
-        "metrics_sys_19.csv"
+        "metrics_stat_19.csv"
     )
 
     plot_acc_vs_round(*metrics)
     plot_loss_vs_round(*metrics)
-    plot_bytes_vs_round(*metrics)
-    plot_comp_vs_round(*metrics)
+    # plot_bytes_vs_round(*metrics)
+    # plot_comp_vs_round(*metrics)
 
     stat_files = (
         "metrics_stat_21.csv",

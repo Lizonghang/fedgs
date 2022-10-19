@@ -674,7 +674,8 @@ def compare_execution_time(samplers, exec_time):
         #          size=text_fontsize, horizontalalignment="center")
 
     plt.tight_layout()
-    plt.savefig(f"execution-time-compare.pdf")
+    # plt.savefig(f"execution-time-compare.pdf")
+    plt.show()
 
 
 def compare_distribution_divergence(samplers, dist_info):
@@ -714,7 +715,8 @@ def compare_distribution_divergence(samplers, dist_info):
                  color=colors[i], horizontalalignment="center", fontsize=text_fontsize)
 
     plt.tight_layout()
-    plt.savefig(f"dist-divergence-comparison.pdf")
+    # plt.savefig(f"dist-divergence-comparison.pdf")
+    plt.show()
 
 
 def compare_sampler_optim_curve(samplers, dist_info):
@@ -756,7 +758,8 @@ def compare_sampler_optim_curve(samplers, dist_info):
 
     bax.legend(fontsize=legend_fontsize)
     plt.tight_layout()
-    plt.savefig(f"dist-optim-curve.pdf")
+    # plt.savefig(f"dist-optim-curve.pdf")
+    plt.show()
 
 
 def compare_gbp_cs_with_different_init_points(init_strategy, dist_info):
@@ -797,7 +800,8 @@ def compare_gbp_cs_with_different_init_points(init_strategy, dist_info):
 
     plt.legend(fontsize=legend_fontsize)
     plt.tight_layout()
-    plt.savefig(f"dist-optim-init-curve.pdf")
+    # plt.savefig(f"dist-optim-init-curve.pdf")
+    plt.show()
 
 
 def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
@@ -831,7 +835,8 @@ def plot_accuracy_surface_iterations_and_batchsize(xticks, yticks, acc_map):
     cb = plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
     cb.ax.tick_params(labelsize=tick_fontsize)
 
-    plt.savefig(f"acc-surface-batch-iter.pdf")
+    # plt.savefig(f"acc-surface-batch-iter.pdf")
+    plt.show()
 
 
 def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
@@ -865,4 +870,5 @@ def plot_accuracy_surface_groups_and_clients(xticks, yticks, acc_map):
     cb = plt.colorbar(surf, cax=position, shrink=0.5, aspect=5)
     cb.ax.tick_params(labelsize=tick_fontsize)
 
-    plt.savefig(f"acc-surface-groups-devices.pdf")
+    # plt.savefig(f"acc-surface-groups-devices.pdf")
+    plt.show()
