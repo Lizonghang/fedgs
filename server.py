@@ -429,7 +429,8 @@ class MiddleServer(Server):
 
     def gbp_cs_sampling(self, clients, num_clients, batch_size, base_dist,
                       exist_clients=[], mp_init=True):
-        """Search for an approximate optimal solution using genetic algorithm.
+        """Search for an approximate optimal solution using the gradient-based
+        binary permutation algorithm for client selection.
         Args:
             clients: List of clients to be sampled.
             num_clients: Number of clients to sample.
