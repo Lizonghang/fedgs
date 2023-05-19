@@ -17,6 +17,8 @@ Enter the [scripts](https://github.com/Lizonghang/fedgs/tree/main/scripts) folde
 
 Modify <code>/home/lizh/fedgs</code> to your actual project path in [scripts/run.sh](https://github.com/Lizonghang/fedgs/blob/main/scripts/run.sh). Then run [scripts/run.sh](https://github.com/Lizonghang/fedgs/blob/main/scripts/run.sh), which will create a container named <code>fedgs.0</code> if <code>CONTAINER_RANK</code> is set to 0 and starts the task.
 
+Use ``./preprocess.sh -s niid --sf 0.1 -k 100 -t sample --smplseed 0 --spltseed 0`` in ``data/femnist`` to generate dataset and then run
+
 > chmod a+x run.sh && ./run.sh
 
 The output logs and models will be stored in a <code>logs</code> folder created automatically. For example, outputs of the FEMNIST task with container rank 0 will be stored in <code>logs/femnist/0/</code>.
